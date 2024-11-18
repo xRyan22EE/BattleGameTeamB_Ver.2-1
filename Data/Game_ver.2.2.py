@@ -59,7 +59,7 @@ colors = {
 
 # pygame display Initialization
 
-GameScreen = pygame.display.set_mode((ScreenWidth, ScreenHight-10),pygame.RESIZABLE)
+GameScreen = pygame.display.set_mode((ScreenWidth, ScreenHight-10),pygame.FULLSCREEN)
 
 # disply variable for the game screen
 ScreenXcenter = GameScreen.get_rect().centerx # get the center of the screen width
@@ -653,7 +653,7 @@ bg_img = pygame.image.load("images/BG/download.png").convert()
 
 # Update screen before and after placing ships
 def UpdateGameScreen(window: pygame.surface) -> None:
-    global game_started, game_over, resetGameGrid, run_game, player1_values, player2_values, scroll # Access the global game_started variable
+    global game_started, game_over, resetGameGrid, run_game, player1_values, player2_values, scroll, game_paused # Access the global game_started variable
 
     # Draw the scrolling background
     width = bg_img.get_width()
@@ -686,7 +686,14 @@ def UpdateGameScreen(window: pygame.surface) -> None:
                 print_game_state()
                 player1_values, player2_values = copyGrids()
 
-        setting_button.Draw(window)
+        random_font = pygame.font.SysFont("OCR-A Extended", 27) # Set the font style and size
+        text = random_font.render("Press R for rnadom", True, red) # Render the text to the screen
+        text_pos = (50, 20) # Set the position of the text 
+        window.blit(text, text_pos) 
+
+        if setting_button.Draw(window) or game_paused: # Check if the setting button is clicked or the game is paused
+            game_paused = setting_button_function()
+
 
     else:  # the game started
 
@@ -698,10 +705,16 @@ def UpdateGameScreen(window: pygame.surface) -> None:
             for ship in Playerfleet:
                 ship.draw(window)
                 ship.snap_to_grid(pGameGrid)
-
-            draw_shots(player1_values, player2_values)
-            display_turn(GameScreen, player2_values['player2Turn'], player2_values['player2Turn'])
-        else:
+            
+            if setting_button.Draw(window) or game_paused:
+                game_paused = True
+                setting_button_function()          
+            
+            if not game_paused:
+                draw_shots(player1_values, player2_values)
+                display_turn(GameScreen, player2_values['player2Turn'], player2_values['player2Turn'])
+        
+        elif game_over:
             draw_shots(player1_values, player2_values)
             font = pygame.font.SysFont("OCR-A Extended", 100)
             text = font.render("GAME OVER", True, green)
