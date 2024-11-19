@@ -29,14 +29,20 @@ game_started = False # variable to check if the game has started
 game_paused = False # variable to check if the game is paused
 
 # Game Settings and Variables
-ScreenWidth = 1920
-ScreenHight = 1080
+ScreenWidth = 1260
+ScreenHight = 960
 # 1260
 # 960
 #1920
 #1080
+#----------------- Bug fixed -----------------
+# snape to grid function fixed to snap to the closest cell [ Done ]
 
-grid_size = 15
+
+
+#----------------- Bug fixed -----------------
+
+grid_size = 10
 resetGameGrid = True
 game_over = False
  
@@ -57,14 +63,13 @@ orange = (245, 145, 30)
 
 # Colors of shots taken
 colors = {
-    '..': black,
     'S': red,
     'H': orange,
     'M': blue}
 
 # pygame display Initialization
 
-GameScreen = pygame.display.set_mode((ScreenWidth, ScreenHight-10),pygame.FULLSCREEN)
+GameScreen = pygame.display.set_mode((ScreenWidth, ScreenHight-10))
 
 # disply variable for the game screen
 ScreenXcenter = GameScreen.get_rect().centerx # get the center of the screen width
