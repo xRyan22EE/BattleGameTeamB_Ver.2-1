@@ -29,9 +29,14 @@ game_started = False # variable to check if the game has started
 game_paused = False # variable to check if the game is paused
 
 # Game Settings and Variables
-ScreenWidth = 1260
-ScreenHight = 960
-grid_size = 10
+ScreenWidth = 1920
+ScreenHight = 1080
+# 1260
+# 960
+#1920
+#1080
+
+grid_size = 15
 resetGameGrid = True
 game_over = False
  
@@ -240,43 +245,47 @@ class ship:
         current_top_left = self.rect.topleft
         closest_cell_top_left = None
         min_distance = float("inf")
+        grid_start_x = grid[0][0][0]  # Grid's left boundary
+        grid_end_x = grid[0][-1][0]   # Grid's right boundary
+        grid_start_y = grid[0][0][1]  # Grid's top boundary
+        grid_end_y = grid[-1][0][1]   # Grid's bottom boundary
 
         if self.CheckinGrid(pGameGrid):
             for row in grid:
                 for col in row:
                     cell_top_left_x = col[0]
                     cell_top_left_y = col[1]
-                    distance = ((current_top_left[0] - cell_top_left_x) ** 2 +
-                                (current_top_left[1] - cell_top_left_y) ** 2) ** 0.5
+                    # Skip cells that would cause ship to go out of bounds
+                    if self.rotation:
+                        if cell_top_left_x + cells_required_x * CellSize > grid_end_x + CellSize:
+                            continue
+                    else:
+                        if cell_top_left_y + cells_required_y * CellSize > grid_end_y + CellSize:
+                            continue
+
+                    distance = ((current_top_left[0] - cell_top_left_x) ** 2 + 
+                              (current_top_left[1] - cell_top_left_y) ** 2) ** 0.5
 
                     if distance < min_distance:
                         min_distance = distance
                         closest_cell_top_left = (cell_top_left_x, cell_top_left_y)
 
             if closest_cell_top_left:
-                snapped_x = closest_cell_top_left[0]
-                snapped_y = closest_cell_top_left[1]
-
-                border = 530
+                # Verify the ship will fit within grid boundaries
                 if self.rotation:
-                    if snapped_x + cells_required_x * CellSize > border:
-                        snapped_x = border - cells_required_x * CellSize
-                else:
-                    if snapped_y + cells_required_y * CellSize > border:
-                        snapped_y = border - cells_required_y * CellSize
-
-                if self.rotation:
-                    if snapped_x + (cells_required_x * CellSize) <= ScreenWidth and snapped_y <= ScreenHight:
+                    if (closest_cell_top_left[0] >= grid_start_x and 
+                        closest_cell_top_left[0] + cells_required_x * CellSize <= grid_end_x + CellSize):
                         self.rect.topleft = closest_cell_top_left
-                        self.rect.centerx = snapped_x + (cells_required_x * CellSize) // 2
-                        self.rect.centery = snapped_y + (cells_required_y * CellSize) // 2
+                        self.rect.centerx = closest_cell_top_left[0] + (cells_required_x * CellSize) // 2
+                        self.rect.centery = closest_cell_top_left[1] + CellSize // 2
                     else:
                         self.return_to_start()
                 else:
-                    if snapped_y + (cells_required_y * CellSize) <= ScreenHight:
+                    if (closest_cell_top_left[1] >= grid_start_y and 
+                        closest_cell_top_left[1] + cells_required_y * CellSize <= grid_end_y + CellSize):
                         self.rect.topleft = closest_cell_top_left
-                        self.rect.centerx = snapped_x + (cells_required_x * CellSize) // 2
-                        self.rect.centery = snapped_y + (cells_required_y * CellSize) // 2
+                        self.rect.centerx = closest_cell_top_left[0] + CellSize // 2
+                        self.rect.centery = closest_cell_top_left[1] + (cells_required_y * CellSize) // 2
                     else:
                         self.return_to_start()
 
@@ -313,8 +322,8 @@ class ship:
                 cell_top_left_y = col[1]
 
                 # Calculate the distance between the ship and the current cell
-                distance = ((current_top_left[0] - cell_top_left_x) ** 2 + (
-                            current_top_left[1] - cell_top_left_y) ** 2) ** 0.5
+                distance = ((current_top_left[0] - cell_top_left_x) ** 2 + (current_top_left[1] - cell_top_left_y) ** 2) ** 0.5
+
                 # Pythagorean theorem (a^2 + b^2 = c^2) to calculate the distance between two points in 2D space (x, y)
 
                 # Check if the current cell is closer to the ship than the previous closest cell
