@@ -3,7 +3,7 @@
 
 from grid import CreateGameGrid
 from game_utils import LoadImage
-from Buttons import Button
+from Buttons import Button, box_Button
 from Display_Turns import display_turn
 from search_system import search_hit
 from BG import moving_background
@@ -135,9 +135,9 @@ sunk_img = pygame.transform.scale(old_sunk_img, (CellSize, CellSize))
 # - - - - - - - - - - - - - - Buttons - - - - - - - - - - - - - -
 
 # Button instance for start and exit button
-start_button = Button(ScreenXcenter - 50, ScreenYcenter, start_img, ScreenHight, ScreenWidth)
+start_button = Button(ScreenXcenter, ScreenYcenter, start_img, ScreenHight, ScreenWidth)
 # exit_button = Button(ScreenWidth // 2, (ScreenHight // 2) + ScreenWidth // 25, exit_img, ScreenHight, ScreenWidth)
-setting_button = Button(ScreenXcenter - 50, ScreenYcenter + ScreenHight // 15, setting_img, ScreenHight, ScreenWidth)
+setting_button = Button(ScreenXcenter, ScreenYcenter + ScreenHight // 15, setting_img, ScreenHight, ScreenWidth)
 settings_panel = pygame.Surface((400, 500))
 settings_panel.fill((50, 50, 50))  # Dark gray background
 settings_panel_rect = settings_panel.get_rect(center=(ScreenXcenter, ScreenYcenter))  # Center the panel on the screen
@@ -738,30 +738,30 @@ def setting_button_function() -> bool:
     up_img = pygame.image.load(r"images\Button Itch Pack\Up\up_1.png").convert_alpha()
     down_img = pygame.image.load(r"images\Button Itch Pack\Down\down_1.png").convert_alpha()
 
-    main_menu_button = Button(settings_panel_rect.centerx, settings_panel_rect.bottom - 150, main_menu_img, settings_panel_rect.height, settings_panel_rect.width)
+    main_menu_button = Button(settings_panel_rect.centerx, settings_panel_rect.bottom - 135, main_menu_img, settings_panel_rect.height, settings_panel_rect.width)
     quit_button = Button(settings_panel_rect.centerx, settings_panel_rect.bottom - 50, quit_img, settings_panel_rect.height, settings_panel_rect.width)
     restart_button = Button(settings_panel_rect.centerx, settings_panel_rect.bottom - 350, restart_img, settings_panel_rect.height, settings_panel_rect.width)
     back_button = Button(settings_panel_rect.centerx, settings_panel_rect.bottom - 450, back_img, settings_panel_rect.height, settings_panel_rect.width)
     fullscreen_button = Button(settings_panel_rect.centerx, settings_panel_rect.bottom - 250, fullscreen_img, settings_panel_rect.height, settings_panel_rect.width)
-    volume_button = Button(settings_panel_rect.centerx + 150, settings_panel_rect.centery, volume_img, settings_panel_rect.height, settings_panel_rect.width)
-    up_button = Button(settings_panel_rect.centerx + 150, settings_panel_rect.centery - 50, up_img, settings_panel_rect.height, settings_panel_rect.width)
-    down_button = Button(settings_panel_rect.centerx + 150, settings_panel_rect.centery + 50, down_img, settings_panel_rect.height, settings_panel_rect.width)
+    volume_button = box_Button(settings_panel_rect.centerx + 150, settings_panel_rect.centery, volume_img, settings_panel_rect.height, settings_panel_rect.width)
+    up_button = box_Button(settings_panel_rect.centerx + 150, settings_panel_rect.centery - 70, up_img, settings_panel_rect.height, settings_panel_rect.width)
+    down_button = box_Button(settings_panel_rect.centerx + 150, settings_panel_rect.centery + 70, down_img, settings_panel_rect.height, settings_panel_rect.width)
 
     if down_button.rect.collidepoint(pygame.mouse.get_pos()):
         down_img = pygame.image.load(r"images\Button Itch Pack\Down\down_3.png").convert_alpha()
-        down_button = Button(settings_panel_rect.centerx + 150, settings_panel_rect.centery + 50, down_img, settings_panel_rect.height, settings_panel_rect.width)
+        down_button = box_Button(settings_panel_rect.centerx + 150, settings_panel_rect.centery + 70, down_img, settings_panel_rect.height, settings_panel_rect.width)
 
     if up_button.rect.collidepoint(pygame.mouse.get_pos()):
         up_img = pygame.image.load(r"images\Button Itch Pack\Up\up_3.png").convert_alpha()
-        up_button = Button(settings_panel_rect.centerx + 150, settings_panel_rect.centery - 50, up_img, settings_panel_rect.height, settings_panel_rect.width)
+        up_button = box_Button(settings_panel_rect.centerx + 150, settings_panel_rect.centery - 70, up_img, settings_panel_rect.height, settings_panel_rect.width)
 
     if volume_button.rect.collidepoint(pygame.mouse.get_pos()):
         volume_img = pygame.image.load("images\Button Itch Pack\Volume_button\Volume2.png").convert_alpha()
-        volume_button = Button(settings_panel_rect.centerx + 150, settings_panel_rect.centery, volume_img, settings_panel_rect.height, settings_panel_rect.width)
+        volume_button = box_Button(settings_panel_rect.centerx + 150, settings_panel_rect.centery, volume_img, settings_panel_rect.height, settings_panel_rect.width)
     
     if main_menu_button.rect.collidepoint(pygame.mouse.get_pos()):
         main_menu_img = pygame.image.load("images\Button Itch Pack\Main Menu\Main Menu3.png").convert_alpha()
-        main_menu_button = Button(settings_panel_rect.centerx, settings_panel_rect.bottom - 150, main_menu_img, settings_panel_rect.height, settings_panel_rect.width)
+        main_menu_button = Button(settings_panel_rect.centerx, settings_panel_rect.bottom - 135, main_menu_img, settings_panel_rect.height, settings_panel_rect.width)
 
     if quit_button.rect.collidepoint(pygame.mouse.get_pos()):
         quit_img = pygame.image.load("images\Button Itch Pack\Quit\Quit3.png").convert_alpha()
@@ -784,7 +784,6 @@ def setting_button_function() -> bool:
     overlay.fill((0, 0, 0))  # Fill the overlay with black color
     overlay.set_alpha(80)  # Set the transparency level
     GameScreen.blit(overlay, (0, 0))  # Draw the overlay on top of the screen
-
     GameScreen.blit(settings_panel, settings_panel_rect.topleft)
         
     # Draw buttons on settings panel
@@ -851,10 +850,10 @@ def UpdateGameScreen(window: pygame.surface) -> None:
 
         if setting_button.rect.collidepoint(pygame.mouse.get_pos()):
             setting_img = pygame.image.load("images\Button Itch Pack\Settings\Settings3.png").convert_alpha()
-            setting_button = Button(ScreenXcenter - 10, ScreenYcenter + ScreenHight // 15, setting_img, ScreenHight, ScreenWidth)
+            setting_button = Button(ScreenXcenter, ScreenYcenter + ScreenHight // 15, setting_img, ScreenHight, ScreenWidth)
         else:
             setting_img = pygame.image.load("images\Button Itch Pack\Settings\Settings1.png").convert_alpha()
-            setting_button = Button(ScreenXcenter - 10, ScreenYcenter + ScreenHight // 15, setting_img, ScreenHight, ScreenWidth)
+            setting_button = Button(ScreenXcenter, ScreenYcenter + ScreenHight // 15, setting_img, ScreenHight, ScreenWidth)
         if setting_button.Draw(window):
             game_paused = True
 
@@ -874,10 +873,10 @@ def UpdateGameScreen(window: pygame.surface) -> None:
             if all_ships_placed() and not game_started:
                 if start_button.rect.collidepoint(pygame.mouse.get_pos()):
                     start_img = pygame.image.load("images\Button Itch Pack\Start\Start3.png").convert_alpha()
-                    start_button = Button(ScreenXcenter - 10, ScreenYcenter, start_img, ScreenHight, ScreenWidth + 200)
+                    start_button = Button(ScreenXcenter, ScreenYcenter, start_img, ScreenHight, ScreenWidth + 200)
                 else:
                     start_img = pygame.image.load("images\Button Itch Pack\Start\Start1.png").convert_alpha()
-                    start_button = Button(ScreenXcenter - 10, ScreenYcenter, start_img, ScreenHight, ScreenWidth + 200)
+                    start_button = Button(ScreenXcenter, ScreenYcenter, start_img, ScreenHight, ScreenWidth + 200)
 
                 if start_button.Draw(window):
                     game_started = True
