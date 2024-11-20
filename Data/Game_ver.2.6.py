@@ -738,10 +738,10 @@ def setting_button_function() -> bool:
     up_img = pygame.image.load(r"images\Button Itch Pack\Up\up_1.png").convert_alpha()
     down_img = pygame.image.load(r"images\Button Itch Pack\Down\down_1.png").convert_alpha()
 
-    main_menu_button = Button(settings_panel_rect.centerx, settings_panel_rect.bottom - 450, main_menu_img, settings_panel_rect.height, settings_panel_rect.width)
-    quit_button = Button(settings_panel_rect.centerx, settings_panel_rect.bottom - 350, quit_img, settings_panel_rect.height, settings_panel_rect.width)
-    restart_button = Button(settings_panel_rect.centerx, settings_panel_rect.bottom - 150, restart_img, settings_panel_rect.height, settings_panel_rect.width)
-    back_button = Button(settings_panel_rect.centerx, settings_panel_rect.bottom - 50, back_img, settings_panel_rect.height, settings_panel_rect.width)
+    main_menu_button = Button(settings_panel_rect.centerx, settings_panel_rect.bottom - 150, main_menu_img, settings_panel_rect.height, settings_panel_rect.width)
+    quit_button = Button(settings_panel_rect.centerx, settings_panel_rect.bottom - 50, quit_img, settings_panel_rect.height, settings_panel_rect.width)
+    restart_button = Button(settings_panel_rect.centerx, settings_panel_rect.bottom - 350, restart_img, settings_panel_rect.height, settings_panel_rect.width)
+    back_button = Button(settings_panel_rect.centerx, settings_panel_rect.bottom - 450, back_img, settings_panel_rect.height, settings_panel_rect.width)
     fullscreen_button = Button(settings_panel_rect.centerx, settings_panel_rect.bottom - 250, fullscreen_img, settings_panel_rect.height, settings_panel_rect.width)
     volume_button = Button(settings_panel_rect.centerx + 150, settings_panel_rect.centery, volume_img, settings_panel_rect.height, settings_panel_rect.width)
     up_button = Button(settings_panel_rect.centerx + 150, settings_panel_rect.centery - 50, up_img, settings_panel_rect.height, settings_panel_rect.width)
@@ -761,11 +761,11 @@ def setting_button_function() -> bool:
     
     if main_menu_button.rect.collidepoint(pygame.mouse.get_pos()):
         main_menu_img = pygame.image.load("images\Button Itch Pack\Main Menu\Main Menu3.png").convert_alpha()
-        main_menu_button = Button(settings_panel_rect.centerx, settings_panel_rect.bottom - 450, main_menu_img, settings_panel_rect.height, settings_panel_rect.width)
+        main_menu_button = Button(settings_panel_rect.centerx, settings_panel_rect.bottom - 150, main_menu_img, settings_panel_rect.height, settings_panel_rect.width)
 
     if quit_button.rect.collidepoint(pygame.mouse.get_pos()):
         quit_img = pygame.image.load("images\Button Itch Pack\Quit\Quit3.png").convert_alpha()
-        quit_button = Button(settings_panel_rect.centerx, settings_panel_rect.bottom - 350, quit_img, settings_panel_rect.height, settings_panel_rect.width)
+        quit_button = Button(settings_panel_rect.centerx, settings_panel_rect.bottom - 50, quit_img, settings_panel_rect.height, settings_panel_rect.width)
 
     if fullscreen_button.rect.collidepoint(pygame.mouse.get_pos()):
         fullscreen_img = pygame.image.load("images\Button Itch Pack\Fullscreen\Fullscreen3.png").convert_alpha()
@@ -773,11 +773,11 @@ def setting_button_function() -> bool:
 
     if restart_button.rect.collidepoint(pygame.mouse.get_pos()):
         restart_img = pygame.image.load("images\Button Itch Pack\Restart\Restart3.png").convert_alpha()
-        restart_button = Button(settings_panel_rect.centerx, settings_panel_rect.bottom - 150, restart_img, settings_panel_rect.height, settings_panel_rect.width)
+        restart_button = Button(settings_panel_rect.centerx, settings_panel_rect.bottom - 350, restart_img, settings_panel_rect.height, settings_panel_rect.width)
 
     if back_button.rect.collidepoint(pygame.mouse.get_pos()):
         back_img = pygame.image.load("images\Button Itch Pack\Resume\Resume3.png").convert_alpha()
-        back_button = Button(settings_panel_rect.centerx, settings_panel_rect.bottom - 50, back_img, settings_panel_rect.height, settings_panel_rect.width)
+        back_button = Button(settings_panel_rect.centerx, settings_panel_rect.bottom - 450, back_img, settings_panel_rect.height, settings_panel_rect.width)
 
     # Draw the settings panel on the screen
     overlay = pygame.Surface((ScreenWidth, ScreenHight))  # Create a transparent overlay
