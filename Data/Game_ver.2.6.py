@@ -78,7 +78,7 @@ colors = {
 
 # pygame display Initialization
 
-GameScreen = pygame.display.set_mode((ScreenWidth, ScreenHight - 10), pygame.FULLSCREEN)
+GameScreen = pygame.display.set_mode((ScreenWidth, ScreenHight - 10))
 
 # disply variable for the game screen
 ScreenXcenter = GameScreen.get_rect().centerx  # get the center of the screen width
