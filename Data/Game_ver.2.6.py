@@ -138,7 +138,7 @@ sunk_img = pygame.transform.scale(old_sunk_img, (CellSize, CellSize))
 start_button = Button(ScreenXcenter - 50, ScreenYcenter, start_img, ScreenHight, ScreenWidth)
 # exit_button = Button(ScreenWidth // 2, (ScreenHight // 2) + ScreenWidth // 25, exit_img, ScreenHight, ScreenWidth)
 setting_button = Button(ScreenXcenter - 50, ScreenYcenter + ScreenHight // 15, setting_img, ScreenHight, ScreenWidth)
-settings_panel = pygame.Surface((600, 500))
+settings_panel = pygame.Surface((400, 500))
 settings_panel.fill((50, 50, 50))  # Dark gray background
 settings_panel_rect = settings_panel.get_rect(center=(ScreenXcenter, ScreenYcenter))  # Center the panel on the screen
 # Create buttons for settings panel
