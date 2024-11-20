@@ -1,11 +1,12 @@
 #  - - - - - - - - - - - - - - - - - - Modules Import - - - - - - - - - - - - - - - - - -
 # Import functions from game's files
+
 from grid import CreateGameGrid
 from game_utils import LoadImage
 from Buttons import Button
 from Display_Turns import display_turn
 from search_system import search_hit
-from BG import moving_background, draw_scrolling_background
+from BG import moving_background
 
 # Import modules
 import pygame
@@ -14,6 +15,7 @@ import copy
 import math
 import os
 import time
+
 # - - - - - - - - - - - - - - - - - - Initialization - - - - - - - - - - - - - - - - - -
 
 # set main directory to the whole project's file
@@ -25,33 +27,37 @@ pygame.init()
 
 # game variables
 clock = pygame.time.Clock()
-game_started = False # variable to check if the game has started
-game_paused = False # variable to check if the game is paused
+game_started = False  # variable to check if the game has started
+game_paused = False  # variable to check if the game is paused
 
 # Game Settings and Variables
-ScreenWidth = 1260
-ScreenHight = 960
-# 1260
-# 960
-#1920
-#1080
-#----------------- Bug fixed -----------------
-# snape to grid function fixed to snap to the closest cell [ Done ]
-
-
-
-#----------------- Bug fixed -----------------
-
+ScreenWidth = int(1260 * 1.2)
+ScreenHight = int(960 * 1.2)
 grid_size = 10
 resetGameGrid = True
 game_over = False
- 
+
+
+# Set grid size based on user input
+def set_grid_size(new_rows: int, new_cols: int) -> None:
+    # function to set grid size and dynamically adjust cell size
+    global raws, cols, CellSize, pGameGrid, pGameLogic, cGameGrid, cGameLogic
+    raws = new_rows
+    cols = new_cols
+
+    # divide ScreenHight by 2 to leave space for both grids and divide by raws to get the cell size for the grid
+    CellSize = min(ScreenWidth // cols, ScreenHight // (2 * raws))
+    # create game grid for player and computer grid with the new raws, cols and cell size
+    pGameGrid = CreateGameGrid(raws, cols, CellSize, (50, 50))
+    cGameGrid = CreateGameGrid(raws, cols, CellSize, (((ScreenWidth - 50) - (cols * CellSize)), 50))
+
+
+# set the grid size for the game (rows, cols)
+set_grid_size(grid_size, grid_size)
+
 # Set first shot out of boundaries till the user input
-yCooForShots = grid_size +1
-xCooForShots = grid_size +1
-
-# Set the first turn
-
+yCooForShots = grid_size + 1
+xCooForShots = grid_size + 1
 
 # Set colors (R,G,B)
 white = (255, 255, 255)
@@ -69,17 +75,17 @@ colors = {
 
 # pygame display Initialization
 
-GameScreen = pygame.display.set_mode((ScreenWidth, ScreenHight-10))
+GameScreen = pygame.display.set_mode((ScreenWidth, ScreenHight - 10), pygame.RESIZABLE)
 
 # disply variable for the game screen
-ScreenXcenter = GameScreen.get_rect().centerx # get the center of the screen width
-ScreenYcenter = GameScreen.get_rect().centery # get the center of the screen hight
+ScreenXcenter = GameScreen.get_rect().centerx  # get the center of the screen width
+ScreenYcenter = GameScreen.get_rect().centery  # get the center of the screen hight
 
 # background image path and variables
-image_path = 'images/BG/download.png'
-BG_width, BG_tiles, BG_img = moving_background(image_path, ScreenWidth)
+BG_border = pygame.image.load('images/BG/radar_border.png').convert_alpha()
+BG_border = pygame.transform.scale(BG_border, (ScreenWidth, ScreenHight))
 
-
+BG_width, BG_tiles, BG_img = moving_background('images/BG/download.png', ScreenWidth, ScreenHight)
 
 # set the title of the window
 pygame.display.set_caption("Battle Ship Demo")
@@ -87,7 +93,7 @@ pygame.display.set_caption("Battle Ship Demo")
 # Game Lists/Dictionaries
 
 # Initialize copy of players grids, where copy_grids[0] is a list for player 1, and copy_grids[1] is a list for player 2
-copy_grids = [[],[]]
+copy_grids = [[], []]
 
 # Players_fleet  = Player Fleet Dictionary     key: [name, image path, position, size, health]
 Players_fleet = {
@@ -114,7 +120,14 @@ start_img = pygame.image.load("images/Button/start_btn.png").convert_alpha()
 exit_img = pygame.image.load("images/Button/exit_btn.png").convert_alpha()
 setting_img = pygame.image.load("images/Button/settings_icon.png").convert_alpha()
 
+old_miss_img = pygame.image.load("images/tokens/bluetoken.png").convert_alpha()
+miss_img = pygame.transform.scale(old_miss_img, (CellSize, CellSize))
 
+old_hit_img = pygame.image.load("images/tokens/fire.png").convert_alpha()
+hit_img = pygame.transform.scale(old_hit_img, (CellSize, CellSize))
+
+old_sunk_img = pygame.image.load("images/tokens/explosion_sunk.png").convert_alpha()
+sunk_img = pygame.transform.scale(old_sunk_img, (CellSize, CellSize))
 # - - - - - - - - - - - - - - Buttons - - - - - - - - - - - - - -
 
 # Button instance for start and exit button
@@ -123,7 +136,8 @@ start_button = Button(ScreenXcenter, ScreenYcenter, start_img, ScreenHight, Scre
 setting_button = Button(ScreenXcenter, ScreenYcenter + ScreenHight // 15, setting_img, ScreenHight, ScreenWidth)
 settings_panel = pygame.Surface((600, 500))
 settings_panel.fill((50, 50, 50))  # Dark gray background
-settings_panel_rect = settings_panel.get_rect(center=(ScreenXcenter, ScreenYcenter)) # Center the panel on the screen
+settings_panel_rect = settings_panel.get_rect(center=(ScreenXcenter, ScreenYcenter))  # Center the panel on the screen
+
 
 # - - - - - - - - Game Assets and Objects - - - - - - - - -
 class ship:
@@ -250,47 +264,43 @@ class ship:
         current_top_left = self.rect.topleft
         closest_cell_top_left = None
         min_distance = float("inf")
-        grid_start_x = grid[0][0][0]  # Grid's left boundary
-        grid_end_x = grid[0][-1][0]   # Grid's right boundary
-        grid_start_y = grid[0][0][1]  # Grid's top boundary
-        grid_end_y = grid[-1][0][1]   # Grid's bottom boundary
 
         if self.CheckinGrid(pGameGrid):
             for row in grid:
                 for col in row:
                     cell_top_left_x = col[0]
                     cell_top_left_y = col[1]
-                    # Skip cells that would cause ship to go out of bounds
-                    if self.rotation:
-                        if cell_top_left_x + cells_required_x * CellSize > grid_end_x + CellSize:
-                            continue
-                    else:
-                        if cell_top_left_y + cells_required_y * CellSize > grid_end_y + CellSize:
-                            continue
-
-                    distance = ((current_top_left[0] - cell_top_left_x) ** 2 + 
-                              (current_top_left[1] - cell_top_left_y) ** 2) ** 0.5
+                    distance = ((current_top_left[0] - cell_top_left_x) ** 2 +
+                                (current_top_left[1] - cell_top_left_y) ** 2) ** 0.5
 
                     if distance < min_distance:
                         min_distance = distance
                         closest_cell_top_left = (cell_top_left_x, cell_top_left_y)
 
             if closest_cell_top_left:
-                # Verify the ship will fit within grid boundaries
+                snapped_x = closest_cell_top_left[0]
+                snapped_y = closest_cell_top_left[1]
+
+                border = 530
                 if self.rotation:
-                    if (closest_cell_top_left[0] >= grid_start_x and 
-                        closest_cell_top_left[0] + cells_required_x * CellSize <= grid_end_x + CellSize):
+                    if snapped_x + cells_required_x * CellSize > border:
+                        snapped_x = border - cells_required_x * CellSize
+                else:
+                    if snapped_y + cells_required_y * CellSize > border:
+                        snapped_y = border - cells_required_y * CellSize
+
+                if self.rotation:
+                    if snapped_x + (cells_required_x * CellSize) <= ScreenWidth and snapped_y <= ScreenHight:
                         self.rect.topleft = closest_cell_top_left
-                        self.rect.centerx = closest_cell_top_left[0] + (cells_required_x * CellSize) // 2
-                        self.rect.centery = closest_cell_top_left[1] + CellSize // 2
+                        self.rect.centerx = snapped_x + (cells_required_x * CellSize) // 2
+                        self.rect.centery = snapped_y + (cells_required_y * CellSize) // 2
                     else:
                         self.return_to_start()
                 else:
-                    if (closest_cell_top_left[1] >= grid_start_y and 
-                        closest_cell_top_left[1] + cells_required_y * CellSize <= grid_end_y + CellSize):
+                    if snapped_y + (cells_required_y * CellSize) <= ScreenHight:
                         self.rect.topleft = closest_cell_top_left
-                        self.rect.centerx = closest_cell_top_left[0] + CellSize // 2
-                        self.rect.centery = closest_cell_top_left[1] + (cells_required_y * CellSize) // 2
+                        self.rect.centerx = snapped_x + (cells_required_x * CellSize) // 2
+                        self.rect.centery = snapped_y + (cells_required_y * CellSize) // 2
                     else:
                         self.return_to_start()
 
@@ -327,8 +337,8 @@ class ship:
                 cell_top_left_y = col[1]
 
                 # Calculate the distance between the ship and the current cell
-                distance = ((current_top_left[0] - cell_top_left_x) ** 2 + (current_top_left[1] - cell_top_left_y) ** 2) ** 0.5
-
+                distance = ((current_top_left[0] - cell_top_left_x) ** 2 + (
+                        current_top_left[1] - cell_top_left_y) ** 2) ** 0.5
                 # Pythagorean theorem (a^2 + b^2 = c^2) to calculate the distance between two points in 2D space (x, y)
 
                 # Check if the current cell is closer to the ship than the previous closest cell
@@ -401,11 +411,12 @@ class ship:
     # Debugging methods
     def __str__(self):
         return f"{self.name}: {self.rect.center} || {self.rect} || {self.vimg} || {self.himg} "
-    
+
     @classmethod
     def view_all_instances(cls):
         for ships in cls.instances:
             print(ships)
+
 
 # - - - - - - - - Ships Related Functions - - - - - - - -
 def createfleet() -> list:
@@ -415,9 +426,10 @@ def createfleet() -> list:
         if name != "patrol boat" and name != "rescue ship":
             adjusted_size = (CellSize, cell_count * CellSize)
         else:
-            adjusted_size = (CellSize*0.65, CellSize * cell_count)
+            adjusted_size = (CellSize * 0.65, CellSize * cell_count)
         fleet.append(ship(name, img_path, pos, adjusted_size))
     return fleet
+
 
 def randomized_computer_ships(shiplist: list, gamegrid: list) -> None:
     for ship in shiplist:
@@ -450,16 +462,19 @@ def randomized_computer_ships(shiplist: list, gamegrid: list) -> None:
                 ship.computer_snap_to_grid(gamegrid)
                 placed = True
 
+
 def all_ships_placed() -> bool:
     # Check if all ships are placed in the grid
 
     # Return True if all ships are placed in the grid, otherwise return False
     return all(ship.is_placed_in_grid() for ship in Playerfleet)
 
+
 def sortfleet(ship, shiplist: list) -> None:
     # function to sort ships in the list to the top of the list when selected to show on top of other ships
     shiplist.remove(ship)
     shiplist.append(ship)
+
 
 # function to handle ship selection
 def handle_ship_selection() -> None:
@@ -477,6 +492,7 @@ def handle_ship_selection() -> None:
             # move the ship to the mouse position and update the game screen
             i.selectshipandmove()
 
+
 # - - - - - - - - - - Turns based System - - - - - - - - - - -
 
 # - - - - - - - - Search for Hits System - - - - - - - - -
@@ -485,14 +501,15 @@ def handle_ship_selection() -> None:
 
 # setting button function
 def setting_button_function() -> bool:
-    game_paused = True # Set the game to paused
-    overlay = pygame.Surface((ScreenWidth, ScreenHight)) # Create a transparent overlay 
-    overlay.fill((0, 0, 0)) # Fill the overlay with black color
+    game_paused = True  # Set the game to paused
+    overlay = pygame.Surface((ScreenWidth, ScreenHight))  # Create a transparent overlay
+    overlay.fill((0, 0, 0))  # Fill the overlay with black color
     overlay.set_alpha(80)  # Set the transparency level
     GameScreen.blit(overlay, (0, 0))  # Draw the overlay on top of the screen
 
     GameScreen.blit(settings_panel, settings_panel_rect.topleft)  # Draw the settings panel on the screen
     return game_paused
+
 
 # Set grid size based on user input
 def set_grid_size(new_rows: int, new_cols: int) -> None:
@@ -506,6 +523,7 @@ def set_grid_size(new_rows: int, new_cols: int) -> None:
     # create game grid for player and computer grid with the new raws, cols and cell size
     pGameGrid = CreateGameGrid(raws, cols, CellSize, (50, 50))
     cGameGrid = CreateGameGrid(raws, cols, CellSize, (((ScreenWidth - 50) - (cols * CellSize)), 50))
+
 
 # Make a copy of players grids to calculate hits
 def copyGrids():
@@ -526,12 +544,15 @@ def copyGrids():
     player2Turn = not player1Turn
 
     # Set lists for each player
-    player1_values = {'player1Grid': player1Grid, 'player1_reference': player1_reference, 'player1_fleet': player1_fleet, 'player1Turn': player1Turn}
-    player2_values = {'player2Grid': player2Grid, 'player2_reference': player2_reference, 'player2_fleet': player2_fleet, 'player2Turn': player2Turn}
-    return player1_values,player2_values
+    player1_values = {'player1Grid': player1Grid, 'player1_reference': player1_reference,
+                      'player1_fleet': player1_fleet, 'player1Turn': player1Turn}
+    player2_values = {'player2Grid': player2Grid, 'player2_reference': player2_reference,
+                      'player2_fleet': player2_fleet, 'player2Turn': player2Turn}
+    return player1_values, player2_values
+
 
 # Draw shots indicators
-def draw_shots(player1_values, player2_values):
+def draw_shots(window, player1_values, player2_values):
     # Draw all grid with shots or without
     # Used try & except to not draw on ships
     for row in range(len(player2_values['player2Grid'])):
@@ -539,7 +560,16 @@ def draw_shots(player1_values, player2_values):
             xCooForShots = col
             yCooForShots = row
             try:
-                pygame.draw.circle(GameScreen, colors[player2_values['player2Grid'][row][col]], (cGameGrid[yCooForShots][xCooForShots][0] + CellSize // 2,cGameGrid[yCooForShots][xCooForShots][1] + CellSize // 2),CellSize // 4)
+                if player2_values['player2Grid'][row][col] == 'M':
+                    window.blit(miss_img,
+                                (cGameGrid[yCooForShots][xCooForShots][0], cGameGrid[yCooForShots][xCooForShots][1]))
+                if player2_values['player2Grid'][row][col] == 'H':
+                    window.blit(hit_img,
+                                (cGameGrid[yCooForShots][xCooForShots][0], cGameGrid[yCooForShots][xCooForShots][1]))
+                if player2_values['player2Grid'][row][col] == 'S':
+                    window.blit(sunk_img,
+                                (cGameGrid[yCooForShots][xCooForShots][0], cGameGrid[yCooForShots][xCooForShots][1]))
+                # pygame.draw.circle(GameScreen, colors[player2_values['player2Grid'][row][col]], (cGameGrid[yCooForShots][xCooForShots][0] + CellSize // 2,cGameGrid[yCooForShots][xCooForShots][1] + CellSize // 2),CellSize // 4)
             except:
                 pass
     for row in range(len(player1_values['player1Grid'])):
@@ -547,9 +577,32 @@ def draw_shots(player1_values, player2_values):
             xCooForShots = col
             yCooForShots = row
             try:
-                pygame.draw.circle(GameScreen, colors[player1_values['player1Grid'][row][col]], (pGameGrid[yCooForShots][xCooForShots][0] + CellSize // 2,pGameGrid[yCooForShots][xCooForShots][1] + CellSize // 2),CellSize // 4)
+                if player1_values['player1Grid'][row][col] == 'M':
+                    window.blit(miss_img,
+                                (pGameGrid[yCooForShots][xCooForShots][0], pGameGrid[yCooForShots][xCooForShots][1]))
+                if player1_values['player1Grid'][row][col] == 'H':
+                    window.blit(hit_img,
+                                (pGameGrid[yCooForShots][xCooForShots][0], pGameGrid[yCooForShots][xCooForShots][1]))
+                if player1_values['player1Grid'][row][col] == 'S':
+                    window.blit(sunk_img,
+                                (pGameGrid[yCooForShots][xCooForShots][0], pGameGrid[yCooForShots][xCooForShots][1]))
             except:
                 pass
+
+
+# Draw sunken ships
+def draw_sunken(window, player1_values, player2_values, Playerfleet, Computerfleet):
+    for ship in player1_values['player1_fleet'].keys():
+        if player1_values['player1_fleet'][ship] == 0:
+            for shipName in Playerfleet:
+                if shipName.name[0:2] == ship:
+                    shipName.draw(window)
+    for ship in player2_values['player2_fleet'].keys():
+        if player2_values['player2_fleet'][ship] == 0:
+            for shipName in Computerfleet:
+                if shipName.name[0:2] == ship:
+                    shipName.draw(window)
+
 
 # game utility functions
 def print_game_state() -> None:
@@ -638,6 +691,7 @@ def print_game_state() -> None:
     print_fleet_grid(Playerfleet, pGameGrid, "Player Grid")
     print_fleet_grid(Computerfleet, cGameGrid, "Computer Grid")
 
+
 # show grid on screen function
 def ShowGridOnScreen(Window: pygame.surface, CellSize: int, PlayerGrid: list, ComputerGrid: list) -> None:
     # Draw the grid to the screen
@@ -649,31 +703,27 @@ def ShowGridOnScreen(Window: pygame.surface, CellSize: int, PlayerGrid: list, Co
             for Row in grid:
                 # Row = [Col, Col, Col, Col, Col, Col, Col, Col, Col, Col]
                 for Col in Row:
-                    # Col = [(yCooForShots, xCooForShots),(yCooForShots, xCooForShots),(yCooForShots, xCooForShots),(yCooForShots, xCooForShots),(yCooForShots, xCooForShots),(yCooForShots, xCooForShots),(yCooForShots, xCooForShots),(yCooForShots, xCooForShots),(yCooForShots, xCooForShots),(yCooForShots, xCooForShots)], Row = (yCooForShots, xCooForShots)
+                    # Col = [(y, x),(y, x),(y, x),(y, x),(y, x),(y, x),(y, x),(y, x),(y, x),(y, x)], Row = (y, x)
 
-                    # (window, color, (yCooForShots, xCooForShots, width, height), thickness)
+                    # (window, color, (y, x, width, height), thickness)
                     pygame.draw.rect(Window, white, (Col[0], Col[1], CellSize, CellSize), 1)
-        # else: # Draw shots grid
-        #     for i, row in enumerate(grid):
-        #         for j, cell in enumerate(row):
-        #             pygame.draw.rect(Window, white, (i, j, CellSize, CellSize), 1)
+
 
 # Define scrolling background variables
 scroll = 0
-tiles = 2  # Number of tiles to cover the screen width
+tiles = 5  # Number of tiles to cover the screen width
 
-# Load the background image
-bg_img = pygame.image.load("images/BG/download.png").convert()
 
 # Update screen before and after placing ships
 def UpdateGameScreen(window: pygame.surface) -> None:
-    global game_started, game_over, resetGameGrid, run_game, player1_values, player2_values, scroll, game_paused # Access the global game_started variable
+    global game_started, game_over, resetGameGrid, run_game, player1_values, player2_values, scroll  # Access the global game_started variable
+    window.fill(black)
 
     # Draw the scrolling background
-    width = bg_img.get_width()
+    width = BG_img.get_width()
     for i in range(tiles):
-        window.blit(bg_img, (i * width + scroll, 0))
-    
+        window.blit(BG_img, (i * width + scroll, 0))
+
     # Update the scroll position
     scroll -= 5
 
@@ -700,17 +750,9 @@ def UpdateGameScreen(window: pygame.surface) -> None:
                 print_game_state()
                 player1_values, player2_values = copyGrids()
 
-        random_font = pygame.font.SysFont("OCR-A Extended", 27) # Set the font style and size
-        text = random_font.render("Press R for rnadom", True, red) # Render the text to the screen
-        text_pos = (50, 20) # Set the position of the text 
-        window.blit(text, text_pos) 
-
-        if setting_button.Draw(window) or game_paused: # Check if the setting button is clicked or the game is paused
-            game_paused = setting_button_function()
-
+        setting_button.Draw(window)
 
     else:  # the game started
-
         if not game_over:
             # Draw Grids to the screen
             ShowGridOnScreen(window, CellSize, pGameGrid, cGameGrid)
@@ -719,28 +761,35 @@ def UpdateGameScreen(window: pygame.surface) -> None:
             for ship in Playerfleet:
                 ship.draw(window)
                 ship.snap_to_grid(pGameGrid)
-            
-            if setting_button.Draw(window) or game_paused:
-                game_paused = True
-                setting_button_function()          
-            
-            if not game_paused:
-                draw_shots(player1_values, player2_values)
-                display_turn(GameScreen, player2_values['player2Turn'], player2_values['player2Turn'])
-        
-        elif game_over:
-            draw_shots(player1_values, player2_values)
+
+            draw_sunken(window, player1_values, player2_values, Playerfleet, Computerfleet)
+            draw_shots(window, player1_values, player2_values)
+
+            display_turn(GameScreen, player2_values['player2Turn'], player2_values['player2Turn'])
+        else:
+            # Draw Grids to the screen
+            ShowGridOnScreen(window, CellSize, pGameGrid, cGameGrid)
+
+            # Draw Ships to the screen
+            for ship in Playerfleet:
+                ship.draw(window)
+                ship.snap_to_grid(pGameGrid)
+
+            draw_sunken(window, player1_values, player2_values, Playerfleet, Computerfleet)
+            draw_shots(window, player1_values, player2_values)
+
             font = pygame.font.SysFont("OCR-A Extended", 100)
             text = font.render("GAME OVER", True, green)
             text_pos = (350, 600)
             window.blit(text, text_pos)
 
+    window.blit(BG_border, (0, 0))
     # Update the display
     pygame.display.flip()
+
+
 # - - - - - - - - Initialize Game's Grids - - - - - - - -
 
-# set the grid size for the game (rows, cols)
-set_grid_size(grid_size, grid_size)
 
 # Initialise players
 
@@ -756,6 +805,7 @@ randomized_computer_ships(Computerfleet, cGameGrid)
 # Initialize running game
 run_game = True
 
+
 # Events handler
 def handle_events() -> None:
     global run_game, yCooForShots, xCooForShots, game_over, player1_values, player2_values, game_paused
@@ -767,38 +817,42 @@ def handle_events() -> None:
         if event.type == pygame.QUIT:
             # set run_game to False for exiting the game loop
             run_game = False
-        
-        elif event.type == pygame.KEYDOWN: # Check if a key is pressed 
-            if event.key == pygame.K_r and not game_started:# Check if the key pressed is the 'R' key
-                randomized_computer_ships(Playerfleet, pGameGrid) # Randomize player's ships
+
+        elif event.type == pygame.KEYDOWN:  # Check if a key is pressed
+            if event.key == pygame.K_r and not game_started:  # Check if the key pressed is the 'R' key
+                randomized_computer_ships(Playerfleet, pGameGrid)  # Randomize player's ships
             elif event.key == pygame.K_ESCAPE:
                 game_paused = not game_paused
 
         # check if the event is a mouse button down event
         elif event.type == pygame.MOUSEBUTTONDOWN:
             if not game_started:
-                if event.button == 1: # check if the mouse button pressed was the left mouse button
+                if event.button == 1:  # check if the mouse button pressed was the left mouse button
                     # call the handle_ship_selection function to handle ship selection
                     handle_ship_selection()
                     UpdateGameScreen(GameScreen)
 
-            else: # if the game started
-                if event.button == 1: # check if the mouse button pressed was the left mouse button
-                        if not game_over and not game_paused:
-                            xCooForShots , yCooForShots = pygame.mouse.get_pos() # Get mouse's position
-                            # Based on turns, make borders around the appropriate grid, calculate which cell the mouse clicked
-                            if player1_values['player1Turn'] and cGameGrid[0][0][0] <= xCooForShots <= cGameGrid[grid_size-1][grid_size-1][0] + CellSize and cGameGrid[0][0][1] <= yCooForShots <= cGameGrid[grid_size-1][grid_size-1][1] + CellSize:
-                                xCooForShots = math.floor((xCooForShots // CellSize) - (grid_size*1.5))
-                                yCooForShots = math.ceil((yCooForShots // CellSize) - (grid_size*0.1))
-                                shot = search_hit(yCooForShots, xCooForShots, player1_values, player2_values, game_over)
-                                player1_values, player2_values, game_over = shot[1], shot[2], shot[3]
+            else:  # if the game started
+                if event.button == 1:  # check if the mouse button pressed was the left mouse button
+                    if not game_over and not game_paused:
+                        xCooForShots, yCooForShots = pygame.mouse.get_pos()  # Get mouse's position
+                        # Based on turns, make borders around the appropriate grid, calculate which cell the mouse clicked
+                        if player1_values['player1Turn'] and cGameGrid[0][0][0] <= xCooForShots <= \
+                                cGameGrid[grid_size - 1][grid_size - 1][0] + CellSize and cGameGrid[0][0][
+                            1] <= yCooForShots <= cGameGrid[grid_size - 1][grid_size - 1][1] + CellSize:
+                            xCooForShots = math.floor((xCooForShots // CellSize) - (grid_size * 1.5))
+                            yCooForShots = math.ceil((yCooForShots // CellSize) - (grid_size * 0.1))
+                            shot = search_hit(yCooForShots, xCooForShots, player1_values, player2_values, game_over)
+                            player1_values, player2_values, game_over = shot[1], shot[2], shot[3]
 
-                            # We can implement random Ai down here or any where else
-                            elif player2_values['player2Turn'] and pGameGrid[0][0][0] <= xCooForShots <= pGameGrid[grid_size-1][grid_size-1][0] + CellSize and pGameGrid[0][0][1] <= yCooForShots <= pGameGrid[grid_size-1][grid_size-1][1] + CellSize:
-                                xCooForShots = math.floor((xCooForShots // CellSize) - 1 )
-                                yCooForShots = math.ceil((yCooForShots // CellSize) - 1)
-                                shot = search_hit(yCooForShots, xCooForShots, player1_values, player2_values, game_over)
-                                player1_values, player2_values, game_over = shot[1], shot[2], shot[3]
+                        # We can implement random Ai down here or anywhere else
+                        elif player2_values['player2Turn'] and pGameGrid[0][0][0] <= xCooForShots <= \
+                                pGameGrid[grid_size - 1][grid_size - 1][0] + CellSize and pGameGrid[0][0][
+                            1] <= yCooForShots <= pGameGrid[grid_size - 1][grid_size - 1][1] + CellSize:
+                            xCooForShots = math.floor((xCooForShots // CellSize) - 1)
+                            yCooForShots = math.ceil((yCooForShots // CellSize) - 1)
+                            shot = search_hit(yCooForShots, xCooForShots, player1_values, player2_values, game_over)
+                            player1_values, player2_values, game_over = shot[1], shot[2], shot[3]
 
 
 # Main game loop
@@ -807,6 +861,5 @@ while run_game:
     clock.tick(60)
     handle_events()
     UpdateGameScreen(GameScreen)
-
 
 pygame.quit()

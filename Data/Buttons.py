@@ -19,7 +19,7 @@ class Button:
             if screen_width and screen_height:
                 self.button_width = screen_width // 10
                 self.button_height = screen_height // 15
-                self.image = pygame.transform.scale(self.image, (self.button_width, self.button_height))
+                self.image = pygame.transform.scale2x(self.image)
 
         # Create button rectangle
         self.rect = self.image.get_rect()
