@@ -119,9 +119,16 @@ Player2Health = {
 # loading game variables
 
 # loading game sound and Image
+randomize_img = pygame.image.load('images\Button Itch Pack\Random\Random_1.png')
 start_img = pygame.image.load("images\Button Itch Pack\Start\Start1.png").convert_alpha()
 exit_img = pygame.image.load("images/Button/exit_btn.png").convert_alpha()
 setting_img = pygame.image.load("images\Button Itch Pack\Settings\Settings1.png").convert_alpha()
+ai_img = pygame.image.load('images\Button Itch Pack\Turns\Ai.png')
+player_img = pygame.image.load('images\Button Itch Pack\Turns\Player.png')
+ai_img = pygame.transform.scale(ai_img, (150, 150))
+player_img = pygame.transform.scale(player_img, (150, 150))
+ai_img_rect = ai_img.get_rect(center=(ScreenXcenter, ScreenYcenter))
+player_img_rect = player_img.get_rect(center=(ScreenXcenter, ScreenYcenter))
 
 
 old_miss_img = pygame.image.load("images/tokens/bluetoken.png").convert_alpha()
@@ -136,6 +143,7 @@ sunk_img = pygame.transform.scale(old_sunk_img, (CellSize, CellSize))
 
 # Button instance for start and exit button
 start_button = Button(ScreenXcenter, ScreenYcenter, start_img, ScreenHight, ScreenWidth)
+randomize_button = Button(ScreenXcenter, ScreenYcenter + ScreenHight // 15, randomize_img, ScreenHight, ScreenWidth)
 # exit_button = Button(ScreenWidth // 2, (ScreenHight // 2) + ScreenWidth // 25, exit_img, ScreenHight, ScreenWidth)
 setting_button = Button(ScreenXcenter, ScreenYcenter + ScreenHight // 15, setting_img, ScreenHight, ScreenWidth)
 settings_panel = pygame.Surface((400, 500))
@@ -815,10 +823,10 @@ def setting_button_function() -> bool:
         
     pygame.display.update()  # Draw the settings panel on the screen
 
-
+randomized = True
 # Update screen before and after placing ships
 def UpdateGameScreen(window: pygame.surface) -> None:
-    global game_started, game_over, resetGameGrid, run_game, player1_values, player2_values, scroll, game_paused, start_button, setting_button # Access the global game_started variable
+    global game_started, game_over, resetGameGrid, run_game, player1_values, player2_values, scroll, game_paused, start_button, setting_button, randomize_button,randomized # Access the global game_started variable
     
 
     if game_paused:
@@ -856,11 +864,12 @@ def UpdateGameScreen(window: pygame.surface) -> None:
             setting_button = Button(ScreenXcenter, ScreenYcenter + ScreenHight // 15, setting_img, ScreenHight, ScreenWidth)
         if setting_button.Draw(window):
             game_paused = True
+        
 
         if not game_started:
             # Draw Grids to the screen
             ShowGridOnScreen(window, CellSize, pGameGrid, cGameGrid)
-
+            
             # Draw Ships to the screen
             for ship in Playerfleet:
                 ship.draw(window)
@@ -870,6 +879,28 @@ def UpdateGameScreen(window: pygame.surface) -> None:
                 ship.draw(window)
 
             # Draw Button to the screen
+            if randomize_button.rect.collidepoint(pygame.mouse.get_pos()):
+                randomize_img = pygame.image.load("images\Button Itch Pack\Random\Random_3.png").convert_alpha()
+                randomize_button = Button(ScreenXcenter, ScreenYcenter - 60, randomize_img, ScreenHight, ScreenWidth + 200)
+            else:
+                randomize_img = pygame.image.load("images\Button Itch Pack\Random\Random_1.png").convert_alpha()
+                randomize_button = Button(ScreenXcenter, ScreenYcenter - 60, randomize_img, ScreenHight, ScreenWidth + 200)
+            
+            randomize_button.Draw(window)
+            clicked = pygame.mouse.get_pressed()
+            if clicked[0]:
+                if randomize_button.rect.collidepoint(pygame.mouse.get_pos()):
+                    if randomized:
+                        randomized_computer_ships(Playerfleet, pGameGrid)
+                        randomized = False
+            else:
+                randomized = True
+
+
+
+
+
+
             if all_ships_placed() and not game_started:
                 if start_button.rect.collidepoint(pygame.mouse.get_pos()):
                     start_img = pygame.image.load("images\Button Itch Pack\Start\Start3.png").convert_alpha()
@@ -882,7 +913,6 @@ def UpdateGameScreen(window: pygame.surface) -> None:
                     game_started = True
                     print_game_state()
                     player1_values, player2_values = copyGrids()
-
 
 
         else:  # the game started
@@ -898,7 +928,7 @@ def UpdateGameScreen(window: pygame.surface) -> None:
                 draw_sunken(window, player1_values, player2_values, Playerfleet, Computerfleet)
                 draw_shots(window, player1_values, player2_values)
                 
-                display_turn(GameScreen, player2_values['player2Turn'], player2_values['player2Turn'])
+                display_turn(GameScreen, player2_values['player2Turn'], player2_values['player2Turn'],ai_img,player_img)
             else:
                 # Draw Grids to the screen
                 ShowGridOnScreen(window, CellSize, pGameGrid, cGameGrid)
