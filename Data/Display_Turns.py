@@ -14,10 +14,12 @@ def display_turn(screen, player1Turn, player2Turn,):
 
     # Render Text
     turn_surface = font.render(turn_text, True, color)
+    turn_surface_rect = turn_surface.get_rect(center = (1260//2, 960//2))
 
     # Blit Text to Screen
-    screen.blit(turn_surface, (10, 10))
+    screen.blit(turn_surface, turn_surface_rect)
 
+print(1160/ 2 - 15)
 
 
 
