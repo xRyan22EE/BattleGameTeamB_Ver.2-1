@@ -17,9 +17,82 @@ import os
 import time
 
 # - - - - - - - - - - - - - - - - - - Initialization - - - - - - - - - - - - - - - - - -
-# set main directory to the whole project's file
-assets_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
-os.chdir(assets_dir)
+# Update directory handling
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))  # Get the directory containing this script
+print(f"Base directory: {BASE_DIR}")  # Debug print
+
+def get_asset_path(*paths):
+    """Helper function to build correct asset paths"""
+    full_path = os.path.join(BASE_DIR, *paths)
+    if not os.path.exists(full_path):
+        print(f"WARNING: Asset not found: {full_path}")
+    return full_path
+
+def safe_load_image(path):
+    """Helper function to safely load and convert images"""
+    try:
+        return pygame.image.load(path).convert_alpha()
+    except pygame.error as e:
+        print(f"Failed to load image: {path}")
+        print(f"Error: {e}")
+        # Return a colored surface as fallback
+        surf = pygame.Surface((50, 50))
+        surf.fill((255, 0, 0))  # Red surface as fallback
+        return surf
+
+def verify_assets(paths_dict, parent_key=""):
+    """Recursively verify all asset paths exist"""
+    for key, value in paths_dict.items():
+        current_key = f"{parent_key}.{key}" if parent_key else key
+        if isinstance(value, dict):
+            verify_assets(value, current_key)
+        else:
+            if not os.path.exists(value):
+                print(f"WARNING: Missing asset - {current_key}: {value}")
+
+# Update image and sound paths
+GAME_PATHS = {
+    'images': {
+        'ships': {
+            'carrier': get_asset_path('images', 'ships', 'carrier', 'carrier.png'),
+            'battleship': get_asset_path('images', 'ships', 'battleship', 'battleship.png'),
+            'cruiser': get_asset_path('images', 'ships', 'cruiser', 'cruiser.png'),
+            'destroyer': get_asset_path('images', 'ships', 'destroyer', 'destroyer.png'),
+            'submarine': get_asset_path('images', 'ships', 'submarine', 'submarine.png'),
+            'patrol_boat': get_asset_path('images', 'ships', 'patrol boat', 'patrol boat.png'),
+            'rescue_ship': get_asset_path('images', 'ships', 'rescue ship', 'rescue ship.png')
+        },
+        'tokens': {
+            'miss': get_asset_path('images', 'tokens', 'bluetoken.png'),
+            'hit': get_asset_path('images', 'tokens', 'fire.png'),
+            'sunk': get_asset_path('images', 'tokens', 'explosion_sunk.png')
+        },
+        'buttons': {
+            'random': get_asset_path('images', 'Button_Itch_Pack', 'Random', 'Random_1.png'),
+            'start': get_asset_path('images', 'Button_Itch_Pack', 'Start', 'Start1.png'),
+            'settings': get_asset_path('images', 'Button_Itch_Pack', 'Settings', 'Settings1.png'),
+            'ai': get_asset_path('images', 'Button_Itch_Pack', 'Turns', 'Ai.png'),
+            'player': get_asset_path('images', 'Button_Itch_Pack', 'Turns', 'Player.png')
+        },
+        'bg': {
+            'radar_border': get_asset_path('images', 'BG', 'radar_border.png'),
+            'background': get_asset_path('images', 'BG', 'download.png')
+        }
+    },
+    'sound': {
+        'theme': get_asset_path('sound', 'Metal Gear Solid Main Theme mp3.mp3'),
+        'miss': get_asset_path('sound', 'miss.mp3'),
+        'hit': get_asset_path('sound', 'hit.mp3'),
+        'sunk': get_asset_path('sound', 'sunk.mp3'),
+        'gameover': get_asset_path('sound', 'gameover.mp3'),
+        'player_lose': get_asset_path('sound', 'player_lose.mp3'),
+        'player_win': get_asset_path('sound', 'player_win.mp3')
+    }
+}
+
+# Debug print paths
+print(f"Working directory: {os.getcwd()}")
+verify_assets(GAME_PATHS)
 
 # module Initialization
 pygame.init()
@@ -87,13 +160,13 @@ copy_grids = [[], []]
 
 # Players_fleet  = Player Fleet Dictionary     key: [name, image path, position, size, health]
 Players_fleet = {
-    "carrier": ["carrier", "images/ships/carrier/carrier.png", (50, 600), 5],
-    "battleship": ["battleship", "images/ships/battleship/battleship.png", (125, 600), 4],
-    "cruiser": ["cruiser", "images/ships/cruiser/cruiser.png", (200, 600), 4],
-    "destroyer": ["destroyer", "images/ships/destroyer/destroyer.png", (275, 600), 3],
-    "submarine": ["submarine", "images/ships/submarine/submarine.png", (350, 600), 3],
-    "patrol boat": ["patrol boat", "images/ships/patrol boat/patrol boat.png", (425, 600), 2],
-    "rescue ship": ["rescue ship", "images/ships/rescue ship/rescue ship.png", (500, 600), 2]
+    "carrier": ["carrier", GAME_PATHS['images']['ships']['carrier'], (50, 600), 5],
+    "battleship": ["battleship", GAME_PATHS['images']['ships']['battleship'], (125, 600), 4],
+    "cruiser": ["cruiser", GAME_PATHS['images']['ships']['cruiser'], (200, 600), 4],
+    "destroyer": ["destroyer", GAME_PATHS['images']['ships']['destroyer'], (275, 600), 3],
+    "submarine": ["submarine", GAME_PATHS['images']['ships']['submarine'], (350, 600), 3],
+    "patrol boat": ["patrol boat", GAME_PATHS['images']['ships']['patrol_boat'], (425, 600), 2],
+    "rescue ship": ["rescue ship", GAME_PATHS['images']['ships']['rescue_ship'], (500, 600), 2]
 }
 
 # Set Players Ship's Health, where each key represents the firs two letters of the ship's name
@@ -113,21 +186,21 @@ number_of_sunk_ship_player = 0
 
 #  - - - - - - - - - - - - loading game sound and Image - - - - - - - - - - - - - -
 # background image path and variables
-BG_border_old = pygame.image.load('images/BG/radar_border.png').convert_alpha()
+BG_border_old = safe_load_image(GAME_PATHS['images']['bg']['radar_border'])
 BG_border = pygame.transform.scale(BG_border_old, (ScreenWidth, ScreenHight))
 # Scroll background by using moving_background function for the file BG.py
-BG_width, BG_tiles, BG_img = moving_background('images/BG/download.png', ScreenWidth, ScreenHight)
+BG_width, BG_tiles, BG_img = moving_background(GAME_PATHS['images']['bg']['background'], ScreenWidth, ScreenHight)
 
 # Define scrolling background variables
 scroll = 0
 tiles = 2  # Number of tiles to cover the screen width
 
 # Buttons layout
-randomize_img = pygame.image.load('images/Button_Itch_Pack/Random/Random_1.png')
-start_img = pygame.image.load("images/Button_Itch_Pack/Start/Start1.png").convert_alpha()
-setting_img = pygame.image.load("images/Button_Itch_Pack/Settings/Settings1.png").convert_alpha()
-ai_img = pygame.image.load('images/Button_Itch_Pack/Turns/Ai.png')
-player_img = pygame.image.load('images/Button_Itch_Pack/Turns/Player.png')
+randomize_img = safe_load_image(GAME_PATHS['images']['buttons']['random'])
+start_img = safe_load_image(GAME_PATHS['images']['buttons']['start'])
+setting_img = safe_load_image(GAME_PATHS['images']['buttons']['settings'])
+ai_img = safe_load_image(GAME_PATHS['images']['buttons']['ai'])
+player_img = safe_load_image(GAME_PATHS['images']['buttons']['player'])
 
 ai_img = pygame.transform.scale(ai_img, (150, 150))
 player_img = pygame.transform.scale(player_img, (150, 150))
@@ -135,36 +208,36 @@ ai_img_rect = ai_img.get_rect(center=(ScreenXcenter, ScreenYcenter))
 player_img_rect = player_img.get_rect(center=(ScreenXcenter, ScreenYcenter))
 
 # Hits images
-old_miss_img = pygame.image.load("images/tokens/bluetoken.png").convert_alpha()
+old_miss_img = pygame.image.load(GAME_PATHS['images']['tokens']['miss']).convert_alpha()
 miss_img = pygame.transform.scale(old_miss_img, (CellSize, CellSize))
 
-old_hit_img = pygame.image.load("images/tokens/fire.png").convert_alpha()
+old_hit_img = pygame.image.load(GAME_PATHS['images']['tokens']['hit']).convert_alpha()
 hit_img = pygame.transform.scale(old_hit_img, (CellSize, CellSize))
 
-old_sunk_img = pygame.image.load("images/tokens/explosion_sunk.png").convert_alpha()
+old_sunk_img = pygame.image.load(GAME_PATHS['images']['tokens']['sunk']).convert_alpha()
 sunk_img = pygame.transform.scale(old_sunk_img, (CellSize, CellSize))
 
 # Background theme
-pygame.mixer.music.load('sound/Metal Gear Solid Main Theme mp3.mp3')
+pygame.mixer.music.load(GAME_PATHS['sound']['theme'])
 pygame.mixer.music.set_volume(0.1)  # Set the volume (0.0 to 1.0)
 pygame.mixer.music.play(-1)  # Play the music in a loop
 
 # shots sounds
-miss_sound = pygame.mixer.Sound('sound/miss.mp3')
+miss_sound = pygame.mixer.Sound(GAME_PATHS['sound']['miss'])
 miss_sound.set_volume(0.5)
-hit_sound = pygame.mixer.Sound('sound/hit.mp3')
+hit_sound = pygame.mixer.Sound(GAME_PATHS['sound']['hit'])
 hit_sound.set_volume(0.5)
-sunk_sound = pygame.mixer.Sound('sound/sunk.mp3')
+sunk_sound = pygame.mixer.Sound(GAME_PATHS['sound']['sunk'])
 sunk_sound.set_volume(0.5)
 
 # Game over sound effect
-gameover_sound = pygame.mixer.Sound('sound/gameover.mp3')
+gameover_sound = pygame.mixer.Sound(GAME_PATHS['sound']['gameover'])
 gameover_sound.set_volume(0.5)
 
-player_lose_sound = pygame.mixer.Sound('sound/player_lose.mp3')
+player_lose_sound = pygame.mixer.Sound(GAME_PATHS['sound']['player_lose'])
 player_lose_sound.set_volume(0.5)
 
-player_win_sound = pygame.mixer.Sound('sound/player_win.mp3')
+player_win_sound = pygame.mixer.Sound(GAME_PATHS['sound']['player_win'])
 player_win_sound.set_volume(0.5)
 
 # - - - - - - - - - - - - - - Buttons - - - - - - - - - - - - - -
