@@ -188,40 +188,47 @@ def instructions():
         SCREEN.blit(BG, (BG_rect.x, BG_rect.y))
         INSTRACTION_MOUSE_POS = pygame.mouse.get_pos()
 
-        INSTRACTION_TEXT = get_font(100).render("INSTRUCTIONS", True, "#b68f40")
+        INSTRACTION_TEXT = get_font(50).render("INSTRUCTIONS", True, "#b68f40")  # Reduced size from 100 to 75
+        
+        # New instructions text
+        instructions_text = [
+            "How to Play:",
+            "",
+            "Placing Ships:",
+            "- Drag and drop ships on to your grid or use the Random button",
+            "- Ships cannot overlap or go outside the grid",
+            "",
+            "Gameplay:",
+            "- Take turns attacking by clicking on opponent's grid",
+            "- Fire marker = hit, Blue marker = miss",
+            "- AI plays automatically after your turn",
+            "",
+            "Winning:",
+            "- Destroy all enemy ships to win",
+            "- Game ends when your ships are destroyed",
+            "",
+            "Tips:",
+            "- For more challenge, change the grid size in settings",
+            "- Easy: 10x10:",
+            "- Medium: 12x12:",
+            "- Hard: 15x15:"
+        ]
 
-        instructions_text = "Mission details: Try finding all enemy battleships and burn them to ashes! Good Luck Snake!"
-        lines = instructions_text.split(' ')
-        max_width = 50
-        wrapped_lines = []
-        current_line = ""
+        INSTRACTIONS = [get_font(20).render(line, True, "white") for line in instructions_text]  # Reduced size from 25 to 20
 
-        for word in lines:
-            if len(current_line) + len(word) + 1 <= max_width:
-                current_line += " " + word
-            else:
-                wrapped_lines.append(current_line.strip())
-                current_line = word
-
-        wrapped_lines.append(current_line.strip())
-
-        INSTRACTIONS = [get_font(25).render(line, True, "white") for line in wrapped_lines]
-
-        INSTRACTION_RECT = INSTRACTION_TEXT.get_rect(center=(630, 150))
-
+        INSTRACTION_RECT = INSTRACTION_TEXT.get_rect(center=(630, 100))  # Moved up from 150 to 100
         SCREEN.blit(INSTRACTION_TEXT, INSTRACTION_RECT)
 
-        y_offset = 500
+        y_offset = 200  # Adjusted starting position from 300 to 250
         for line in INSTRACTIONS:
             line_rect = line.get_rect(center=(630, y_offset))
             SCREEN.blit(line, line_rect)
-            y_offset += 40
+            y_offset += 30  # Reduced spacing from 35 to 30
 
         INSTRACTION_BACK = Button_menue(image=None, pos=(640, 850), text_input="BACK", font=get_font(75), base_color="White", hovering_color="Green")
 
-        for button in [INSTRACTION_BACK]:
-            button.changeColor(INSTRACTION_MOUSE_POS)
-            button.update(SCREEN)
+        INSTRACTION_BACK.changeColor(INSTRACTION_MOUSE_POS)
+        INSTRACTION_BACK.update(SCREEN)
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -788,7 +795,70 @@ def game():
                 i.selectshipandmove()
 
     # - - - - - - - - Game Utility Functions - - - - - - - - -
-    # Handle Fullscreen button
+    
+    def instructions_Game(): # Instructions for the game play and how to play
+        instructions_active = True
+        original_screen = GameScreen.copy()  # Save the current game state
+        
+        while instructions_active:
+            INSTRACTION_MOUSE_POS = pygame.mouse.get_pos()
+
+            GameScreen.blit(BG, (BG_rect.x, BG_rect.y))
+
+            INSTRACTION_TEXT = get_font(50).render("INSTRUCTIONS", True, "#b68f40")
+            
+            # New instructions text
+            instructions_text = [
+                "How to Play:",
+                "",
+                "Placing Ships:",
+                "- Drag and drop ships on to your grid or use the Random button",
+                "- Ships cannot overlap or go outside the grid",
+                "",
+                "Gameplay:",
+                "- Take turns attacking by clicking on opponent's grid",
+                "- Fire marker = hit, Blue marker = miss",
+                "- AI plays automatically after your turn",
+                "",
+                "Winning:",
+                "- Destroy all enemy ships to win",
+                "- Game ends when your ships are destroyed",
+                "",
+                "Tips:",
+                "- For more challenge, change the grid size in settings",
+                "- Easy: 10x10:",
+                "- Medium: 12x12:",
+                "- Hard: 15x15:"
+            ]
+
+            INSTRACTIONS = [get_font(20).render(line, True, "white") for line in instructions_text]  # Reduced size from 25 to 20
+
+            INSTRACTION_RECT = INSTRACTION_TEXT.get_rect(center=(630, 100))  # Moved up from 150 to 100
+            GameScreen.blit(INSTRACTION_TEXT, INSTRACTION_RECT)
+
+            y_offset = 200  # Adjusted starting position from 300 to 250
+            for line in INSTRACTIONS:
+                line_rect = line.get_rect(center=(630, y_offset))
+                GameScreen.blit(line, line_rect)
+                y_offset += 30  # Reduced spacing from 35 to 30
+
+            INSTRACTION_BACK = Button_menue(image=None, pos=(640, 850), text_input="BACK", font=get_font(75), base_color="White", hovering_color="Green")
+
+            INSTRACTION_BACK.changeColor(INSTRACTION_MOUSE_POS)
+            INSTRACTION_BACK.update(GameScreen)
+
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    pygame.quit()
+                    sys.exit()
+                if event.type == pygame.MOUSEBUTTONDOWN:
+                    if INSTRACTION_BACK.checkForInput(INSTRACTION_MOUSE_POS):
+                        instructions_active = False
+                        
+            pygame.display.update()
+
+        GameScreen.blit(original_screen, (0, 0))  # Restore the game state
+        pygame.display.update()
 
     # Make a copy of players grids to calculate hits
     def copyGrids():
@@ -1057,7 +1127,9 @@ def game():
         volume_img = pygame.image.load(os.path.join(DIRS['buttons'], 'Volume_button', 'Volume1.png')).convert_alpha()
         up_img = pygame.image.load(os.path.join(DIRS['buttons'], 'Up', 'up_1.png')).convert_alpha()
         down_img = pygame.image.load(os.path.join(DIRS['buttons'], 'Down', 'down_1.png')).convert_alpha()
+        instructions_img = pygame.image.load(os.path.join(DIRS['buttons'], 'Instructions', 'Instructions1.png')).convert_alpha()
 
+        instructions_button = box_Button(settings_panel_rect.centerx - 150, settings_panel_rect.centery, instructions_img, settings_panel_rect.height, settings_panel_rect.width)
         main_menu_button = Button(settings_panel_rect.centerx, settings_panel_rect.bottom - 135, main_menu_img, settings_panel_rect.height, settings_panel_rect.width)
         quit_button = Button(settings_panel_rect.centerx, settings_panel_rect.bottom - 50, quit_img, settings_panel_rect.height, settings_panel_rect.width)
         restart_button = Button(settings_panel_rect.centerx, settings_panel_rect.bottom - 350, restart_img, settings_panel_rect.height, settings_panel_rect.width)
@@ -1098,6 +1170,10 @@ def game():
         if back_button.rect.collidepoint(pygame.mouse.get_pos()):
             back_img = pygame.image.load(os.path.join(DIRS['buttons'], 'Resume', 'Resume3.png')).convert_alpha()
             back_button = Button(settings_panel_rect.centerx, settings_panel_rect.bottom - 450, back_img, settings_panel_rect.height, settings_panel_rect.width)
+
+        if instructions_button.rect.collidepoint(pygame.mouse.get_pos()):
+            instructions_img = pygame.image.load(os.path.join(DIRS['buttons'], 'Instructions', 'Instructions3.png')).convert_alpha()
+            instructions_button = box_Button(settings_panel_rect.centerx - 150, settings_panel_rect.centery, instructions_img, settings_panel_rect.height, settings_panel_rect.width)
 
         # Draw the settings panel on the screen
         overlay = pygame.Surface((ScreenWidth, ScreenHight))  # Create a transparent overlay
@@ -1142,6 +1218,10 @@ def game():
             # Decrease the volume by 0.01
             pygame.mixer.music.set_volume(pygame.mixer.music.get_volume() - 1/100)
             pygame.mixer.music.unpause()
+
+        if instructions_button.Draw(GameScreen):
+            instructions_Game()  # Will now return to settings panel after closing
+            game_paused = True  # Keep the settings panel open
             
         pygame.display.update()  # Draw the settings panel on the screen
 

@@ -7,6 +7,7 @@ from Display_Turns import display_turn
 from search_system import search_hit
 from BG import moving_background
 from Ai import *
+from button import Button as Button_menue # Import button class
 
 # Import modules
 import pygame
@@ -15,11 +16,20 @@ import copy
 import math
 import os
 import time
+import sys
 
 # - - - - - - - - - - - - - - - - - - Initialization - - - - - - - - - - - - - - - - - -
 # Update directory handling
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))  # Get the directory containing this script
 print(f"Base directory: {BASE_DIR}")  # Debug print
+
+def get_font(size):  # Returns Press-Start-2P in the desired size
+    try:
+        return pygame.font.Font("images/assets/font.ttf", size)
+    except OSError:
+        print(f"Warning: Could not load font at {"images/assets/font.ttf"}")
+        return pygame.font.SysFont("Arial", size)
+
 
 def get_asset_path(*paths):
     """Helper function to build correct asset paths"""
@@ -602,6 +612,74 @@ def handle_ship_selection() -> None:
             i.selectshipandmove()
 
 # - - - - - - - - Game Utility Functions - - - - - - - - -
+
+def instructions_Game(): # Instructions for the game play and how to play
+    instructions_active = True
+    original_screen = GameScreen.copy()  # Save the current game state
+    
+    while instructions_active:
+        BG = pygame.image.load("images/assets/Background.png")
+        BG = pygame.transform.scale(BG, (1260, 950))
+        BG_rect = BG.get_rect(center=(630, 475))
+        GameScreen.blit(BG, (BG_rect.x, BG_rect.y))
+        INSTRACTION_MOUSE_POS = pygame.mouse.get_pos()
+
+        INSTRACTION_TEXT = get_font(50).render("INSTRUCTIONS", True, "#b68f40")
+        
+        # New instructions text
+        instructions_text = [
+            "How to Play:",
+            "",
+            "Placing Ships:",
+            "- Drag and drop ships on to your grid or use the Random button",
+            "- Ships cannot overlap or go outside the grid",
+            "",
+            "Gameplay:",
+            "- Take turns attacking by clicking on opponent's grid",
+            "- Fire marker = hit, Blue marker = miss",
+            "- AI plays automatically after your turn",
+            "",
+            "Winning:",
+            "- Destroy all enemy ships to win",
+            "- Game ends when your ships are destroyed",
+            "",
+            "Tips:",
+            "- For more challenge, change the grid size in settings",
+            "- Easy: 10x10:",
+            "- Medium: 12x12:",
+            "- Hard: 15x15:"
+        ]
+
+        INSTRACTIONS = [get_font(20).render(line, True, "white") for line in instructions_text]  # Reduced size from 25 to 20
+
+        INSTRACTION_RECT = INSTRACTION_TEXT.get_rect(center=(630, 100))  # Moved up from 150 to 100
+        GameScreen.blit(INSTRACTION_TEXT, INSTRACTION_RECT)
+
+        y_offset = 200  # Adjusted starting position from 300 to 250
+        for line in INSTRACTIONS:
+            line_rect = line.get_rect(center=(630, y_offset))
+            GameScreen.blit(line, line_rect)
+            y_offset += 30  # Reduced spacing from 35 to 30
+
+        INSTRACTION_BACK = Button_menue(image=None, pos=(640, 850), text_input="BACK", font=get_font(75), base_color="White", hovering_color="Green")
+
+        INSTRACTION_BACK.changeColor(INSTRACTION_MOUSE_POS)
+        INSTRACTION_BACK.update(GameScreen)
+
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                sys.exit()
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                if INSTRACTION_BACK.checkForInput(INSTRACTION_MOUSE_POS):
+                    instructions_active = False
+                    
+        pygame.display.update()
+
+    GameScreen.blit(original_screen, (0, 0))  # Restore the game state
+    pygame.display.update()
+
+
 # Handle Fullscreen button
 def toggle_fullscreen() -> None:
     global GameScreen, fullscreen
@@ -853,8 +931,10 @@ def setting_button_function() -> bool:
     main_menu_img = pygame.image.load(r"images/Button_Itch_Pack/Main Menu/Main Menu1.png").convert_alpha()
     volume_img = pygame.image.load(r"images/Button_Itch_Pack/Volume_button/Volume1.png").convert_alpha()
     up_img = pygame.image.load(r"images/Button_Itch_Pack/Up/up_1.png").convert_alpha()
+    instructions_img = pygame.image.load("images/Button_Itch_Pack/Instructions/Instructions1.png").convert_alpha()
     down_img = pygame.image.load(r"images/Button_Itch_Pack/Down/down_1.png").convert_alpha()
 
+    instructions_button = box_Button(settings_panel_rect.centerx - 150, settings_panel_rect.centery, instructions_img, settings_panel_rect.height, settings_panel_rect.width)
     main_menu_button = Button(settings_panel_rect.centerx, settings_panel_rect.bottom - 135, main_menu_img, settings_panel_rect.height, settings_panel_rect.width)
     quit_button = Button(settings_panel_rect.centerx, settings_panel_rect.bottom - 50, quit_img, settings_panel_rect.height, settings_panel_rect.width)
     restart_button = Button(settings_panel_rect.centerx, settings_panel_rect.bottom - 350, restart_img, settings_panel_rect.height, settings_panel_rect.width)
@@ -896,6 +976,11 @@ def setting_button_function() -> bool:
         back_img = pygame.image.load("images/Button_Itch_Pack/Resume/Resume3.png").convert_alpha()
         back_button = Button(settings_panel_rect.centerx, settings_panel_rect.bottom - 450, back_img, settings_panel_rect.height, settings_panel_rect.width)
 
+    if instructions_button.rect.collidepoint(pygame.mouse.get_pos()):
+        instructions_img = pygame.image.load("images/Button_Itch_Pack/Instructions/Instructions3.png").convert_alpha()
+        instructions_button = box_Button(settings_panel_rect.centerx - 150, settings_panel_rect.centery, instructions_img, settings_panel_rect.height, settings_panel_rect.width)
+
+
     # Draw the settings panel on the screen
     overlay = pygame.Surface((ScreenWidth, ScreenHight))  # Create a transparent overlay
     overlay.fill((0, 0, 0))  # Fill the overlay with black color
@@ -915,6 +1000,10 @@ def setting_button_function() -> bool:
     
     if quit_button.Draw(GameScreen):
         run_game = False
+
+    if instructions_button.Draw(GameScreen):
+        instructions_Game()  # Will now return to settings panel after closing
+        game_paused = True  # Keep the settings panel open
 
     if main_menu_button.Draw(GameScreen):
         run_game = False
