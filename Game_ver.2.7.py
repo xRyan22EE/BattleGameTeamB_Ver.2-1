@@ -979,8 +979,6 @@ def UpdateGameScreen(window: pygame.surface) -> None:
                 ship.draw(window)
                 ship.snap_to_grid(pGameGrid)
 
-            for ship in Computerfleet:
-                ship.draw(window)
 
             # Draw Button to the screen
             if randomize_button.rect.collidepoint(pygame.mouse.get_pos()):

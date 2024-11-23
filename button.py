@@ -1,4 +1,27 @@
 import pygame
+import os
+def setup_directories():
+    # Get the directory containing the script
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    
+    # Define required directories relative to script location
+    required_dirs = {
+        'images': os.path.join(script_dir, 'images'),
+        'sound': os.path.join(script_dir, 'sound'),
+        'assets': os.path.join(script_dir, 'images', 'assets'),
+        'ships': os.path.join(script_dir, 'images', 'ships'),
+        'tokens': os.path.join(script_dir, 'images', 'tokens'),
+        'buttons': os.path.join(script_dir, 'images', 'Button_Itch_Pack')
+    }
+    
+    # Create directories if they don't exist
+    for dir_path in required_dirs.values():
+        os.makedirs(dir_path, exist_ok=True)
+    
+    return required_dirs
+
+# Setup directories before imports
+DIRS = setup_directories()
 
 class Button():
 	def __init__(self, image, pos, text_input, font, base_color, hovering_color):
@@ -52,7 +75,7 @@ class Slider():
         self.button_rect = pygame.Rect(self.slider_left_pos + self.initial_val, self.slider_top_pos, self.button_width, self.size[1])
 
         # label
-        self.text = pygame.font.Font(r"images\assets\font.ttf", 25).render(str(int(self.get_value())), True, "white", None)
+        self.text = pygame.font.Font(os.path.join(DIRS["assets"],"font.ttf"), 25).render(str(int(self.get_value())), True, "white", None)
         self.label_rect = self.text.get_rect(center=(self.pos[0], self.slider_top_pos - 15))
 
     def move_slider(self, mouse_pos):
@@ -77,5 +100,5 @@ class Slider():
         return (button_val / val_range) * (self.max - self.min) + self.min
 
     def display_value(self, app):
-        self.text = pygame.font.Font(r"images\assets\font.ttf", 25).render(str(int(self.get_value())), True, "white", None)
+        self.text = pygame.font.Font(os.path.join(DIRS["assets"],"font.ttf"), 25).render(str(int(self.get_value())), True, "white", None)
         app.blit(self.text, self.label_rect)

@@ -49,14 +49,17 @@ pygame.init()
 
 # Update paths to use DIRS
 SCREEN = pygame.display.set_mode((1260, 950))
-pygame.display.set_caption("Menu")
+pygame.display.set_caption("Battle Ship Demo")
 grid_size_menu = 10
 volume_value = 0.1
 
 # Use os.path.join for file paths
+icon = pygame.image.load(os.path.join(DIRS['assets'], 'ShipGame.png'))
+pygame.display.set_icon(icon)
+
 BG = pygame.image.load(os.path.join(DIRS['assets'], 'Background.png')).convert_alpha()
 BG = pygame.transform.scale(BG, (1260, 950))
-BG_rect = BG.get_rect(center=(SCREEN.get_width() // 2, SCREEN.get_height() // 2))
+BG_rect = BG.get_rect(center=(630, 475))
 
 # Load music with error handling
 try:
@@ -66,7 +69,7 @@ try:
 except pygame.error:
     print("Warning: Could not load background music")
 
-volume_slider = Slider((SCREEN.get_width()//2, 785), (500, 25), pygame.mixer.music.get_volume(), 0, 100)
+volume_slider = Slider((630, 775), (500, 25), pygame.mixer.music.get_volume(), 0, 100)
 
 def get_font(size):  # Returns Press-Start-2P in the desired size
     font_path = os.path.join(DIRS['assets'], 'font.ttf')
@@ -89,16 +92,16 @@ def options():
 
         
         OPTIONS_TEXT = get_font(100).render("OPTIONS", True, "#b68f40")
-        OPTIONS_RECT = OPTIONS_TEXT.get_rect(center=(SCREEN.get_width()//2, 150))
+        OPTIONS_RECT = OPTIONS_TEXT.get_rect(center=(630, 150))
         SCREEN.blit(OPTIONS_TEXT, OPTIONS_RECT)
 
         VOLUME_TEXT = get_font(50).render("Volume", True, "white")
-        VOLUME_RECT = VOLUME_TEXT.get_rect(center=(SCREEN.get_width()//2, SCREEN.get_height()//2 + 210))
+        VOLUME_RECT = VOLUME_TEXT.get_rect(center=(630, 475 + 210))
         SCREEN.blit(VOLUME_TEXT, VOLUME_RECT)
 
-        OPTIONS_BACK = Button_menue(image=None, pos=(SCREEN.get_width()//2, SCREEN.get_height()//2 + 380), text_input="BACK", font=get_font(50), base_color="white", hovering_color="Green")
-        FULL_SCREEN = Button_menue(image=None, pos=(SCREEN.get_width()//2, SCREEN.get_height()//2), text_input="Full Screen", font=get_font(50), base_color="white", hovering_color="Green")
-        DEFCULT = Button_menue(image=None, pos=(SCREEN.get_width()//2, SCREEN.get_height()//2 + 120), text_input="Difficulty", font=get_font(50), base_color="white", hovering_color="Green")
+        OPTIONS_BACK = Button_menue(image=None, pos=(630, 475 + 380), text_input="BACK", font=get_font(50), base_color="white", hovering_color="Green")
+        FULL_SCREEN = Button_menue(image=None, pos=(630, 475), text_input="Full Screen", font=get_font(50), base_color="white", hovering_color="Green")
+        DEFCULT = Button_menue(image=None, pos=(630, 475 + 120), text_input="Difficulty", font=get_font(50), base_color="white", hovering_color="Green")
         
         for button in [OPTIONS_BACK, FULL_SCREEN, DEFCULT]:
             button.changeColor(OPTIONS_MOUSE_POS)
@@ -127,7 +130,11 @@ def options():
                 sys.exit()
             if event.type == pygame.MOUSEBUTTONDOWN:
                 if FULL_SCREEN.checkForInput(OPTIONS_MOUSE_POS):
-                    pygame.display.toggle_fullscreen()                    
+                    if SCREEN.get_flags() & pygame.FULLSCREEN:
+                        pygame.display.set_mode((1260, 950))
+                    else:
+                        pygame.display.set_mode((1260, 950), pygame.FULLSCREEN)
+
 
                 if OPTIONS_BACK.checkForInput(OPTIONS_MOUSE_POS):
                     main_menu()
@@ -143,13 +150,19 @@ def defcult():
         DEFCULT_MOUSE_POS = pygame.mouse.get_pos()
 
         DEFCULT_TEXT = get_font(100).render("DIFFICULTY", True, "#b68f40")
-        DEFCULT_RECT = DEFCULT_TEXT.get_rect(center=(SCREEN.get_width()//2, 150))
+        DEFCULT_RECT = DEFCULT_TEXT.get_rect(center=(630, 150))
         SCREEN.blit(DEFCULT_TEXT, DEFCULT_RECT)
 
-        EASY_BUTTON = Button_menue(image=None, pos=(SCREEN.get_width()//2, SCREEN.get_height()//2), text_input="EASY", font=get_font(75), base_color="white", hovering_color="green")
-        MEDIUM_BUTTON = Button_menue(image=None, pos=(SCREEN.get_width()//2, SCREEN.get_height()//2 + 120), text_input="MEDIUM", font=get_font(75), base_color="white", hovering_color="green")
-        HARD_BUTTON = Button_menue(image=None, pos=(SCREEN.get_width()//2, SCREEN.get_height()//2 + 240), text_input="HARD", font=get_font(75), base_color="white", hovering_color="green")
-        BACK_BUTTON = Button_menue(image=None, pos=(SCREEN.get_width()//2, SCREEN.get_height()//2 + 360), text_input="BACK", font=get_font(75), base_color="white", hovering_color="green")
+        EASY_BUTTON = Button_menue(image=None, pos=(630, 475), text_input="EASY", font=get_font(75), base_color="white", hovering_color="green")
+        MEDIUM_BUTTON = Button_menue(image=None, pos=(630, 475 + 120), text_input="MEDIUM", font=get_font(75), base_color="white", hovering_color="green")
+        HARD_BUTTON = Button_menue(image=None, pos=(630, 475 + 240), text_input="HARD", font=get_font(75), base_color="white", hovering_color="green")
+        BACK_BUTTON = Button_menue(image=None, pos=(630, 475 + 360), text_input="BACK", font=get_font(75), base_color="white", hovering_color="green")
+        if grid_size_menu == 10:
+            EASY_BUTTON.base_color = ("green")
+        elif grid_size_menu == 12:
+            MEDIUM_BUTTON.base_color = ("green")
+        elif grid_size_menu == 15:
+            HARD_BUTTON.base_color = ("green")
 
         for button in [EASY_BUTTON, MEDIUM_BUTTON, HARD_BUTTON, BACK_BUTTON]:
             button.changeColor(DEFCULT_MOUSE_POS)
@@ -194,13 +207,13 @@ def instructions():
 
         INSTRACTIONS = [get_font(25).render(line, True, "white") for line in wrapped_lines]
 
-        INSTRACTION_RECT = INSTRACTION_TEXT.get_rect(center=(SCREEN.get_width() // 2, 150))
+        INSTRACTION_RECT = INSTRACTION_TEXT.get_rect(center=(630, 150))
 
         SCREEN.blit(INSTRACTION_TEXT, INSTRACTION_RECT)
 
         y_offset = 500
         for line in INSTRACTIONS:
-            line_rect = line.get_rect(center=(SCREEN.get_width() // 2, y_offset))
+            line_rect = line.get_rect(center=(630, y_offset))
             SCREEN.blit(line, line_rect)
             y_offset += 40
 
@@ -227,15 +240,15 @@ def main_menu():
         MENU_MOUSE_POS = pygame.mouse.get_pos()
 
         MENU_TEXT = get_font(100).render("MAIN MENU", True, "#b68f40")
-        MENU_RECT = MENU_TEXT.get_rect(center=(SCREEN.get_width()//2, 150))
+        MENU_RECT = MENU_TEXT.get_rect(center=(630, 150))
         INSTRACTION_IMG = pygame.image.load(os.path.join(DIRS['assets'], 'Options Rect.png')).convert_alpha()
         INSTRACTION_IMG = pygame.transform.scale(INSTRACTION_IMG, (950, 110))
         
 
-        PLAY_BUTTON = Button_menue(image=pygame.image.load(os.path.join(DIRS['assets'], 'Play Rect.png')), pos=(SCREEN.get_width()//2, SCREEN.get_height()//2), text_input="PLAY", font=get_font(75), base_color="#d7fcd4", hovering_color="green")
-        OPTIONS_BUTTON = Button_menue(image=pygame.image.load(os.path.join(DIRS['assets'], 'Options Rect.png')), pos=(SCREEN.get_width()//2, SCREEN.get_height()//2 + 120), text_input="OPTIONS", font=get_font(75), base_color="#d7fcd4", hovering_color="green")
-        QUIT_BUTTON = Button_menue(image=pygame.image.load(os.path.join(DIRS['assets'], 'Quit Rect.png')), pos=(SCREEN.get_width()//2, SCREEN.get_height()//2 + 360), text_input="QUIT", font=get_font(75), base_color="#d7fcd4", hovering_color="green")
-        INSTRACTION = button = Button_menue(image=INSTRACTION_IMG, pos=(SCREEN.get_width()//2, SCREEN.get_height()//2 + 240), text_input="INSTRUCTIONS", font=get_font(75), base_color="#d7fcd4", hovering_color="green")
+        PLAY_BUTTON = Button_menue(image=pygame.image.load(os.path.join(DIRS['assets'], 'Play Rect.png')), pos=(630, 475), text_input="PLAY", font=get_font(75), base_color="#d7fcd4", hovering_color="green")
+        OPTIONS_BUTTON = Button_menue(image=pygame.image.load(os.path.join(DIRS['assets'], 'Options Rect.png')), pos=(630, 475 + 120), text_input="OPTIONS", font=get_font(75), base_color="#d7fcd4", hovering_color="green")
+        QUIT_BUTTON = Button_menue(image=pygame.image.load(os.path.join(DIRS['assets'], 'Quit Rect.png')), pos=(630, 475 + 360), text_input="QUIT", font=get_font(75), base_color="#d7fcd4", hovering_color="green")
+        INSTRACTION = button = Button_menue(image=INSTRACTION_IMG, pos=(630, 475 + 240), text_input="INSTRUCTIONS", font=get_font(75), base_color="#d7fcd4", hovering_color="green")
 
         SCREEN.blit(MENU_TEXT, MENU_RECT)
 
@@ -285,7 +298,7 @@ def game():
 
     # Game Settings and Variables
     ScreenWidth = 1260
-    ScreenHight = 960
+    ScreenHight = 950
 
     # Set colors (R,G,B)
     white = (255, 255, 255)
@@ -299,8 +312,8 @@ def game():
     GameScreen = SCREEN
 
     # display variable for the game screen
-    ScreenXcenter = GameScreen.get_rect().centerx  # get the center of the screen width
-    ScreenYcenter = GameScreen.get_rect().centery  # get the center of the screen height
+    ScreenXcenter = 630  # get the center of the screen width
+    ScreenYcenter = 475 # get the center of the screen height
 
     # set the title of the window
     pygame.display.set_caption("Battle Ship Demo")
@@ -1178,9 +1191,6 @@ def game():
                 for ship in Playerfleet:
                     ship.draw(window)
                     ship.snap_to_grid(pGameGrid)
-
-                for ship in Computerfleet:
-                    ship.draw(window)
 
                 # Draw Button to the screen
                 if randomize_button.rect.collidepoint(pygame.mouse.get_pos()):
