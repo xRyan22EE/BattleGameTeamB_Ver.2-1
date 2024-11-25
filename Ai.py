@@ -7,7 +7,7 @@ import pygame
 class ai_thinking():
     def __init__(self,grid_size, ai_values, player1_values):
         self.last = pygame.time.get_ticks()
-        self.cooldown = 1250
+        self.cooldown = 10
         self.grid_size = grid_size
         self.ai_values = ai_values
         self.player1_values = player1_values

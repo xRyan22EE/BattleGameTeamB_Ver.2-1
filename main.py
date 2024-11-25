@@ -1,6 +1,22 @@
+from grid import CreateGameGrid
+from game_utils import LoadImage
+from Buttons import Button, box_Button
+from Display_Turns import display_turn
+from search_system import search_hit
+from BG import moving_background
+from Ai import *
+from button import Slider
+from button import Button as Button_menue
+from database import *
+
+# Import modules
+import pygame
+import random
+import copy
 import os
+import time
 import sys
-from pathlib import Path
+
 
 # Setup base directories
 def setup_directories():
@@ -26,23 +42,6 @@ def setup_directories():
 # Setup directories before imports
 DIRS = setup_directories()
 
-from grid import CreateGameGrid
-from game_utils import LoadImage
-from Buttons import Button, box_Button
-from Display_Turns import display_turn
-from search_system import search_hit
-from BG import moving_background
-from Ai import *
-from button import Slider
-from button import Button as Button_menue
-
-# Import modules
-import pygame
-import random
-import copy
-import os
-import time
-import sys
 
 
 pygame.init()
@@ -283,8 +282,8 @@ def main_menu():
 
 
 def game():
-    global SCREEN, game_paused, scroll, setting_button, game_started, randomize_button, start_button, fullscreen, ai_img, player_img, ai_img_rect, player_img_rect, ScreenWidth, ScreenHight, grid_size, resetGameGrid, game_over, ScreenXcenter, ScreenYcenter, BG_border_old, BG_border, BG_width, BG_tiles, BG_img, white, black, red, green, blue, orange, colors, miss_img, hit_img, sunk_img, old_miss_img, old_hit_img, old_sunk_img, pGameGrid, cGameGrid, pGameLogic, cGameLogic, Playerfleet, Computerfleet, raws, cols, CellSize, pGameGrid, pGameLogic, cGameGrid, cGameLogic, copy_grids, Players_fleet, Player1Health, Player2Health, game_over, yCooForShots, xCooForShots, start_img, exit_img, setting_img, randomize_img, settings_panel, settings_panel_rect, clock, GameScreen, ai_values, ai_turn, number_of_sunk_ship_ai, number_of_sunk_ship_player, gameover_sound, player_lose_sound, player_win_sound, game_started, game_paused, ai_vs_player, randomized, play_gameover_once, ai_values, ai_turn, number_of_sunk_ship_ai, number_of_sunk_ship_player, gameover_sound, player_lose_sound, player_win_sound, game_started, game_paused, ai_vs_player, randomized, play_gameover_once, miss_sound, hit_sound, sunk_sound, BG, BG_rect, volume_slider, value
-
+    
+    global name ,SCREEN, game_paused, scroll, setting_button, game_started, randomize_button, start_button, fullscreen, ai_img, player_img, ai_img_rect, player_img_rect, ScreenWidth, ScreenHight, grid_size, resetGameGrid, game_over, ScreenXcenter, ScreenYcenter, BG_border_old, BG_border, BG_width, BG_tiles, BG_img, white, black, red, green, blue, orange, colors, miss_img, hit_img, sunk_img, old_miss_img, old_hit_img, old_sunk_img, pGameGrid, cGameGrid, pGameLogic, cGameLogic, Playerfleet, Computerfleet, raws, cols, CellSize, pGameGrid, pGameLogic, cGameGrid, cGameLogic, copy_grids, Players_fleet, Player1Health, Player2Health, game_over, yCooForShots, xCooForShots, start_img, exit_img, setting_img, randomize_img, settings_panel, settings_panel_rect, clock, GameScreen, ai_values, ai_turn, number_of_sunk_ship_ai, number_of_sunk_ship_player, gameover_sound, player_lose_sound, player_win_sound, game_started, game_paused, ai_vs_player, randomized, play_gameover_once, ai_values, ai_turn, number_of_sunk_ship_ai, number_of_sunk_ship_player, gameover_sound, player_lose_sound, player_win_sound, game_started, game_paused, ai_vs_player, randomized, play_gameover_once, miss_sound, hit_sound, sunk_sound, BG, BG_rect, volume_slider, value
     # - - - - - - - - - - - - - - - - - - Initialization - - - - - - - - - - - - - - - - - -
     # set main directory to the whole project's file
     assets_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
@@ -1343,9 +1342,17 @@ def game():
                         pygame.mixer.music.stop()
                         gameover_sound.play()
                         if player1_values['player1Turn']:
+                            initialize_database()
                             player_lose_sound.play()
+                            record_loss(name)
+                            
                         else:
+                            initialize_database()
                             player_win_sound.play()
+                            record_win(name)
+                            
+                            
+                            
 
                         play_gameover_once = False
 
@@ -1468,4 +1475,70 @@ def game():
         UpdateGameScreen(GameScreen)
 
     pygame.quit()
-main_menu()
+
+
+
+
+def get_player_name(screen=SCREEN, font=get_font(24)):
+    global name
+    SCREEN_RECT = screen.get_rect()
+    input_box = pygame.Rect(SCREEN_RECT.centerx, SCREEN_RECT.centery, 400, 50)
+    input_box.center = SCREEN_RECT.center
+    color_inactive = pygame.Color('lightskyblue3')
+    color_active = pygame.Color('dodgerblue2')
+    color = color_inactive
+    active = False
+    text = ''
+    done = False
+    Name_Entered = False
+
+    while not done:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                sys.exit()
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                active = input_box.collidepoint(event.pos)
+                color = color_active if active else color_inactive
+            if event.type == pygame.KEYDOWN:
+                if active:
+                    if event.key == pygame.K_RETURN:
+                        Name_Entered = True
+                    elif event.key == pygame.K_BACKSPACE:
+                        text = text[:-1]
+                    else:
+                        text += event.unicode
+
+        # Clear screen and redraw everything
+        SCREEN.blit(BG, (BG_rect.x, BG_rect.y))
+        
+        # Render input box
+        pygame.draw.rect(screen, color, input_box, 2)
+        
+        # Render text
+        txt_surface = font.render(text, True, pygame.Color('green'))
+        screen.blit(txt_surface, (input_box.x + 5, input_box.y + 5))
+        
+        # Render instructions
+        instructions = font.render("Enter your name and press ENTER:", True, pygame.Color('green'))
+        screen.blit(instructions, (80, 275))
+        
+        # Adjust input box width
+        input_box.w = max(400, txt_surface.get_width() + 10)
+
+        if Name_Entered:
+            initialize_database()
+            WINS, LOSSES = get_player_stats(text.upper())  # Get player stats
+            if WINS is None and LOSSES is None:
+                add_player(text.upper())
+            name = text.upper()
+            done = True
+            main_menu()
+
+        pygame.display.update()
+
+# Call the function to get the player name
+get_player_name()
+
+
+
