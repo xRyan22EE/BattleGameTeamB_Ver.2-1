@@ -26,8 +26,6 @@ import json
 # Setup directories before imports
 DIRS = setup_directories()
 
-
-
 pygame.init()
 
 # Update paths to use DIRS
@@ -54,7 +52,18 @@ except pygame.error:
 
 volume_slider = Slider((630, 775), (500, 25), pygame.mixer.music.get_volume(), 0, 100)
 
+SAVE_DIRS = {
+    # ... your existing DIRS entries ...
+    'save_file': os.path.join(os.path.dirname(__file__), 'Save_file')
+}
 
+def delete_save(Player_name) -> None:
+    # function to delete the save file and start new game
+    save_filename = f"save_{Player_name.lower()}.json"
+    save_path = os.path.join(SAVE_DIRS['save_file'], save_filename)
+    if os.path.exists(save_path):
+        os.remove(save_path)
+        
 
 def play():
     game()
@@ -152,10 +161,13 @@ def defcult():
             if event.type == pygame.MOUSEBUTTONDOWN:
                 if EASY_BUTTON.checkForInput(DEFCULT_MOUSE_POS):
                     grid_size_menu = 10
+                    delete_save(Player_name)
                 if MEDIUM_BUTTON.checkForInput(DEFCULT_MOUSE_POS):
                     grid_size_menu = 12
+                    delete_save(Player_name)
                 if HARD_BUTTON.checkForInput(DEFCULT_MOUSE_POS):
                     grid_size_menu = 15
+                    delete_save(Player_name)
                 if BACK_BUTTON.checkForInput(DEFCULT_MOUSE_POS):
                     options()
         pygame.display.update()
@@ -702,6 +714,7 @@ def game():
 
 
     # - - - - - - - - Ships Related Functions - - - - - - - -
+
     # Create fleet based on players fleet dictionary
     def createfleet() -> list:
         fleet = []
@@ -773,7 +786,9 @@ def game():
                 i.selectshipandmove()
 
     # - - - - - - - - Game Utility Functions - - - - - - - - -
+
     
+    # function to save the game
     def instructions_Game(): # Instructions for the game play and how to play
         instructions_active = True
         original_screen = GameScreen.copy()  # Save the current game state
@@ -1166,6 +1181,7 @@ def game():
         
         if restart_button.Draw(GameScreen):
             restart_game()
+            delete_save(Player_name)
 
         if fullscreen_button.Draw(GameScreen):
             if pygame.display.get_surface().get_flags() & pygame.FULLSCREEN:
@@ -1174,13 +1190,13 @@ def game():
                 pygame.display.set_mode((1260, 950), pygame.FULLSCREEN)
         
         if quit_button.Draw(GameScreen):
-            if not game_over:
+            if not game_over and game_started:
                 save_game_state()
             run_game = False
             sys.exit()
 
         if main_menu_button.Draw(GameScreen):
-            if not game_over:
+            if not game_over and game_started:
                 save_game_state()
             run_game = False
             restart_game_menu()
@@ -1406,7 +1422,6 @@ def game():
             
         return new_ship
 
-    
     # Add this to your DIRS setup at the beginning of the file
     SAVE_DIRS = {
         # ... your existing DIRS entries ...
@@ -1431,6 +1446,7 @@ def game():
             'Playerfleet': [ship_to_dict(ship) for ship in Playerfleet],
             'Computerfleet': [ship_to_dict(ship) for ship in Computerfleet],
             'grid_size': grid_size,
+            'valume': pygame.mixer.music.get_volume(),
             'scroll': scroll,
             'number_of_sunk_ship_ai': number_of_sunk_ship_ai,
             'number_of_sunk_ship_player': number_of_sunk_ship_player,
@@ -1442,11 +1458,12 @@ def game():
             with open(save_path, 'w') as file:
                 json.dump(game_state, file)
             print(f"Game state saved for player {Player_name}")
+
         except Exception as e:
             print(f"Error saving game state: {e}")
 
     def load_game_state():
-        global Playerfleet, Computerfleet, player1_values, player2_values, game_started
+        global Playerfleet, Computerfleet, player1_values, player2_values, game_started, SCREEN
         global game_over, grid_size, scroll, number_of_sunk_ship_ai
         global number_of_sunk_ship_player, ai_values, ai_turn, ai_vs_player
         
@@ -1469,6 +1486,7 @@ def game():
             player1_values = game_state['player1_values']
             player2_values = game_state['player2_values']
             grid_size = game_state['grid_size']
+            pygame.mixer.music.set_volume(game_state.get('valume'))
             scroll = game_state.get('scroll', 0)
             number_of_sunk_ship_ai = game_state.get('number_of_sunk_ship_ai', 0)
             number_of_sunk_ship_player = game_state.get('number_of_sunk_ship_player', 0)
@@ -1515,7 +1533,7 @@ def game():
 
             # check if the event is a quit event
             if event.type == pygame.QUIT:
-                if not game_over:
+                if not game_over and game_started:
                     save_game_state()
 
                 # set run_game to False for exiting the game loop
@@ -1652,7 +1670,6 @@ def get_player_name(screen=SCREEN, font=get_font(24)):
             main_menu()
 
         pygame.display.update()
-
 
 # Call the function to get the player name
 get_player_name()
