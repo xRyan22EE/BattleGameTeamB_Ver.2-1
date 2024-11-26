@@ -21,6 +21,7 @@ import json
 
 
 # Setup base directories
+Player_name = "DefaultPlayer"  # Define and set Player_name
 
 
 # Setup directories before imports
@@ -229,6 +230,57 @@ def instructions():
                     
         pygame.display.update()
 
+def history(Player_name):
+    # Get the player's history from the database
+    player_history = get_player_stats(Player_name) # Returns the number of wins and losses. If there are none, it returns None, None
+
+    while True:
+        SCREEN.blit(BG, (BG_rect.x, BG_rect.y))
+        HISTORY_MOUSE_POS = pygame.mouse.get_pos()
+
+        HISTORY_TEXT = get_font(100).render("HISTORY", True, "#b68f40")
+        HISTORY_RECT = HISTORY_TEXT.get_rect(center=(630, 150))
+        SCREEN.blit(HISTORY_TEXT, HISTORY_RECT)
+
+        HISTORY_BACK = Button_menue(image=None, pos=(630, 850), text_input="BACK", font=get_font(75), base_color="White", hovering_color="Green")
+        HISTORY_BACK.changeColor(HISTORY_MOUSE_POS)
+        HISTORY_BACK.update(SCREEN)
+
+        # Display the player's history
+        if player_history:
+            # Display the player's history if it exists
+            history_text = [
+                f"Player: {Player_name}",
+                f"Wins: {player_history[0]}",
+                f"Loses: {player_history[1]}"
+            ]
+        else:
+            # Display a message if the player has no history
+            history_text = [
+                f"Player: {Player_name}",
+                "No history found"
+            ]
+
+        HISTORY_TEXT_RENDERED = [get_font(50).render(line, True, "white") for line in history_text]
+
+        y_offset = 300
+
+        for line in HISTORY_TEXT_RENDERED:
+            line_rect = line.get_rect(center=(630, y_offset))
+            SCREEN.blit(line, line_rect)
+            y_offset += 100
+
+
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                sys.exit()
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                if HISTORY_BACK.checkForInput(HISTORY_MOUSE_POS):
+                    main_menu()
+
+        pygame.display.update()
+
 def main_menu():
     while True:
         SCREEN.blit(BG, (BG_rect.x, BG_rect.y))
@@ -241,14 +293,15 @@ def main_menu():
         INSTRACTION_IMG = pygame.transform.scale(INSTRACTION_IMG, (950, 110))
         
 
-        PLAY_BUTTON = Button_menue(image=pygame.image.load(os.path.join(DIRS['assets'], 'Play Rect.png')), pos=(630, 475), text_input="PLAY", font=get_font(75), base_color="#d7fcd4", hovering_color="green")
+        PLAY_BUTTON = Button_menue(image=pygame.image.load(os.path.join(DIRS['assets'], 'Play Rect.png')), pos=(630, 475 - 120), text_input="PLAY", font=get_font(75), base_color="#d7fcd4", hovering_color="green")
         OPTIONS_BUTTON = Button_menue(image=pygame.image.load(os.path.join(DIRS['assets'], 'Options Rect.png')), pos=(630, 475 + 120), text_input="OPTIONS", font=get_font(75), base_color="#d7fcd4", hovering_color="green")
         QUIT_BUTTON = Button_menue(image=pygame.image.load(os.path.join(DIRS['assets'], 'Quit Rect.png')), pos=(630, 475 + 360), text_input="QUIT", font=get_font(75), base_color="#d7fcd4", hovering_color="green")
-        INSTRACTION = button = Button_menue(image=INSTRACTION_IMG, pos=(630, 475 + 240), text_input="INSTRUCTIONS", font=get_font(75), base_color="#d7fcd4", hovering_color="green")
-
+        INSTRACTION = Button_menue(image=INSTRACTION_IMG, pos=(630, 475 + 240), text_input="INSTRUCTIONS", font=get_font(75), base_color="#d7fcd4", hovering_color="green")
+        HISTORY = Button_menue(image=pygame.image.load(os.path.join(DIRS['assets'], 'Options Rect.png')), pos=(630, 475 ), text_input="History", font=get_font(75), base_color="#d7fcd4", hovering_color="green")
+        
         SCREEN.blit(MENU_TEXT, MENU_RECT)
 
-        for button in [PLAY_BUTTON, OPTIONS_BUTTON, QUIT_BUTTON, INSTRACTION]:
+        for button in [PLAY_BUTTON, OPTIONS_BUTTON, QUIT_BUTTON, INSTRACTION, HISTORY]:
             button.changeColor(MENU_MOUSE_POS)
             button.update(SCREEN)
         
@@ -258,12 +311,16 @@ def main_menu():
                 sys.exit()
             if event.type == pygame.MOUSEBUTTONDOWN:
                 if event.button == 1:
+                    if HISTORY.checkForInput(MENU_MOUSE_POS):
+                        history(Player_name)
+
                     if INSTRACTION.checkForInput(MENU_MOUSE_POS):
                         instructions()
                     if PLAY_BUTTON.checkForInput(MENU_MOUSE_POS):
                         play()
                     if OPTIONS_BUTTON.checkForInput(MENU_MOUSE_POS):
                         options()
+
                     if QUIT_BUTTON.checkForInput(MENU_MOUSE_POS):
                         pygame.quit()
                         sys.exit()
