@@ -8,6 +8,7 @@ from Ai import *
 from button import Slider
 from button import Button as Button_menue
 from database import *
+from Font_dirs import setup_directories, get_font
 
 # Import modules
 import pygame
@@ -16,28 +17,11 @@ import copy
 import os
 import time
 import sys
+import json
 
 
 # Setup base directories
-def setup_directories():
-    # Get the directory containing the script
-    script_dir = os.path.dirname(os.path.abspath(__file__))
-    
-    # Define required directories relative to script location
-    required_dirs = {
-        'images': os.path.join(script_dir, 'images'),
-        'sound': os.path.join(script_dir, 'sound'),
-        'assets': os.path.join(script_dir, 'images', 'assets'),
-        'ships': os.path.join(script_dir, 'images', 'ships'),
-        'tokens': os.path.join(script_dir, 'images', 'tokens'),
-        'buttons': os.path.join(script_dir, 'images', 'Button_Itch_Pack')
-    }
-    
-    # Create directories if they don't exist
-    for dir_path in required_dirs.values():
-        os.makedirs(dir_path, exist_ok=True)
-    
-    return required_dirs
+
 
 # Setup directories before imports
 DIRS = setup_directories()
@@ -70,13 +54,7 @@ except pygame.error:
 
 volume_slider = Slider((630, 775), (500, 25), pygame.mixer.music.get_volume(), 0, 100)
 
-def get_font(size):  # Returns Press-Start-2P in the desired size
-    font_path = os.path.join(DIRS['assets'], 'font.ttf')
-    try:
-        return pygame.font.Font(font_path, size)
-    except OSError:
-        print(f"Warning: Could not load font at {font_path}")
-        return pygame.font.SysFont("Arial", size)
+
 
 def play():
     game()
@@ -280,10 +258,9 @@ def main_menu():
 
         pygame.display.update()
 
-
 def game():
     
-    global name ,SCREEN, game_paused, scroll, setting_button, game_started, randomize_button, start_button, fullscreen, ai_img, player_img, ai_img_rect, player_img_rect, ScreenWidth, ScreenHight, grid_size, resetGameGrid, game_over, ScreenXcenter, ScreenYcenter, BG_border_old, BG_border, BG_width, BG_tiles, BG_img, white, black, red, green, blue, orange, colors, miss_img, hit_img, sunk_img, old_miss_img, old_hit_img, old_sunk_img, pGameGrid, cGameGrid, pGameLogic, cGameLogic, Playerfleet, Computerfleet, raws, cols, CellSize, pGameGrid, pGameLogic, cGameGrid, cGameLogic, copy_grids, Players_fleet, Player1Health, Player2Health, game_over, yCooForShots, xCooForShots, start_img, exit_img, setting_img, randomize_img, settings_panel, settings_panel_rect, clock, GameScreen, ai_values, ai_turn, number_of_sunk_ship_ai, number_of_sunk_ship_player, gameover_sound, player_lose_sound, player_win_sound, game_started, game_paused, ai_vs_player, randomized, play_gameover_once, ai_values, ai_turn, number_of_sunk_ship_ai, number_of_sunk_ship_player, gameover_sound, player_lose_sound, player_win_sound, game_started, game_paused, ai_vs_player, randomized, play_gameover_once, miss_sound, hit_sound, sunk_sound, BG, BG_rect, volume_slider, value
+    global Player_name ,SCREEN, game_paused, scroll, setting_button, game_started, randomize_button, start_button, fullscreen, ai_img, player_img, ai_img_rect, player_img_rect, ScreenWidth, ScreenHight, grid_size, resetGameGrid, game_over, ScreenXcenter, ScreenYcenter, BG_border_old, BG_border, BG_width, BG_tiles, BG_img, white, black, red, green, blue, orange, colors, miss_img, hit_img, sunk_img, old_miss_img, old_hit_img, old_sunk_img, pGameGrid, cGameGrid, pGameLogic, cGameLogic, Playerfleet, Computerfleet, raws, cols, CellSize, pGameGrid, pGameLogic, cGameGrid, cGameLogic, copy_grids, Players_fleet, Player1Health, Player2Health, game_over, yCooForShots, xCooForShots, start_img, exit_img, setting_img, randomize_img, settings_panel, settings_panel_rect, clock, GameScreen, ai_values, ai_turn, number_of_sunk_ship_ai, number_of_sunk_ship_player, gameover_sound, player_lose_sound, player_win_sound, game_started, game_paused, ai_vs_player, randomized, play_gameover_once, ai_values, ai_turn, number_of_sunk_ship_ai, number_of_sunk_ship_player, gameover_sound, player_lose_sound, player_win_sound, game_started, game_paused, ai_vs_player, randomized, play_gameover_once, miss_sound, hit_sound, sunk_sound, BG, BG_rect, volume_slider, value
     # - - - - - - - - - - - - - - - - - - Initialization - - - - - - - - - - - - - - - - - -
     # set main directory to the whole project's file
     assets_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
@@ -292,7 +269,7 @@ def game():
     # module Initialization
     pygame.init()
     clock = pygame.time.Clock()
-
+    
     # game variables
     game_started = False  # variable to check if the game has started
     game_paused = False  # variable to check if the game is paused
@@ -301,6 +278,7 @@ def game():
     ai_vs_player = True
     randomized = True
     play_gameover_once = True
+
 
     # Game Settings and Variables
     ScreenWidth = 1260
@@ -340,7 +318,7 @@ def game():
         # create game grid for player and computer grid with the new rows, cols and cell size
         pGameGrid = CreateGameGrid(rows, cols, CellSize, (50, 50))
         cGameGrid = CreateGameGrid(rows, cols, CellSize, (((ScreenWidth - 50) - (cols * CellSize)), 50))
-
+        
     # set the grid size for the game (rows, cols)
     set_grid_size(grid_size, grid_size)
 
@@ -453,6 +431,7 @@ def game():
 
             # Set the start position of the ship to the position passed in the constructor. This is the position the ship will return to if it is not placed in the grid.
             self.start_pos = pos
+            self.size = size
 
             # Load the Vertical Image.
             self.vimg = LoadImage(img, size)
@@ -734,7 +713,7 @@ def game():
                 adjusted_size = (CellSize * 0.65, CellSize * cell_count)
             fleet.append(ship(name, img_path, pos, adjusted_size))
         return fleet
-
+    
     def randomized_computer_ships(shiplist: list, gamegrid: list) -> None:
         for ship in shiplist:
             placed = False
@@ -1036,7 +1015,6 @@ def game():
         print_fleet_grid(Playerfleet, pGameGrid, "Player Grid")
         print_fleet_grid(Computerfleet, cGameGrid, "Computer Grid")
 
-
     # show grid on screen function
     def ShowGridOnScreen(Window: pygame.surface, CellSize: int, PlayerGrid: list, ComputerGrid: list) -> None:
         # Draw the grid to the screen
@@ -1053,7 +1031,7 @@ def game():
                         # (window, color, (y, x, width, height), thickness)
                         pygame.draw.rect(Window, white, (Col[0], Col[1], CellSize, CellSize), 1)
 
-
+    # function to check if the player has won
     def restart_game(): # Restart the game
         global game_started, game_over, resetGameGrid, player1_values, player2_values, Playerfleet,play_gameover_once, Computerfleet, scroll, game_paused, number_of_sunk_ship_ai, number_of_sunk_ship_player, copy_grids, ai_values, ai_turn
 
@@ -1084,6 +1062,7 @@ def game():
         number_of_sunk_ship_ai = 0
         number_of_sunk_ship_player = 0
 
+    
     def restart_game_menu(): # Restart the game
         global game_started, game_over, resetGameGrid, player1_values, player2_values, Playerfleet,play_gameover_once, Computerfleet, scroll, game_paused, number_of_sunk_ship_ai, number_of_sunk_ship_player, copy_grids, ai_values, ai_turn
 
@@ -1195,10 +1174,14 @@ def game():
                 pygame.display.set_mode((1260, 950), pygame.FULLSCREEN)
         
         if quit_button.Draw(GameScreen):
+            if not game_over:
+                save_game_state()
             run_game = False
             sys.exit()
 
         if main_menu_button.Draw(GameScreen):
+            if not game_over:
+                save_game_state()
             run_game = False
             restart_game_menu()
             main_menu()
@@ -1344,14 +1327,12 @@ def game():
                         if player1_values['player1Turn']:
                             initialize_database()
                             player_lose_sound.play()
-                            record_loss(name)
+                            record_loss(Player_name)
                             
                         else:
                             initialize_database()
                             player_win_sound.play()
-                            record_win(name)
-                            
-                            
+                            record_win(Player_name)
                             
 
                         play_gameover_once = False
@@ -1377,6 +1358,137 @@ def game():
             # Update the display
         pygame.display.flip()
 
+    def ship_to_dict(ship):
+        # Get image path from Players_fleet dictionary based on ship name
+        ship_info = Players_fleet.get(ship.name)
+        image_path = ship_info[1] if ship_info else None  # Index 1 contains the image path
+        
+        return {
+            'name': ship.name,
+            'start_pos': ship.start_pos,
+            'size': ship.size,
+            'rect': {
+                'x': ship.rect.x,
+                'y': ship.rect.y,
+                'width': ship.rect.width,
+                'height': ship.rect.height
+            },
+            'rotation': ship.rotation,
+            'active': ship.active,
+            'image_path': image_path
+        }
+
+    def dict_to_ship(ship_dict):
+        # Create new ship instance using stored values
+        new_ship = ship(
+            name=ship_dict['name'],
+            img=ship_dict['image_path'],
+            pos=ship_dict['start_pos'],
+            size=ship_dict['size']
+        )
+        
+        # Restore ship state
+        new_ship.rotation = ship_dict['rotation'] # Restore rotation state
+        new_ship.active = ship_dict['active'] # Restore active state
+        
+        # Restore rect
+        rect_data = ship_dict['rect']
+        new_ship.rect.x = rect_data['x']
+        new_ship.rect.y = rect_data['y']
+        new_ship.rect.width = rect_data['width']
+        new_ship.rect.height = rect_data['height']
+        
+        # Update image based on rotation
+        if new_ship.rotation:
+            new_ship.image = new_ship.himg
+        else:
+            new_ship.image = new_ship.vimg
+            
+        return new_ship
+
+    
+    # Add this to your DIRS setup at the beginning of the file
+    SAVE_DIRS = {
+        # ... your existing DIRS entries ...
+        'save_file': os.path.join(os.path.dirname(__file__), 'Save_file')
+    }
+
+    # Create Save_file directory if it doesn't exist
+    os.makedirs(SAVE_DIRS['save_file'], exist_ok=True)
+
+    def save_game_state():
+        # Create save filename using player name
+        save_filename = f"save_{Player_name.lower()}.json"
+        save_path = os.path.join(SAVE_DIRS['save_file'], save_filename)
+        
+        game_state = {
+            'player_name': Player_name,
+            'game_started': game_started,
+            'game_over': game_over,
+            'resetGameGrid': resetGameGrid,
+            'player1_values': player1_values,
+            'player2_values': player2_values,
+            'Playerfleet': [ship_to_dict(ship) for ship in Playerfleet],
+            'Computerfleet': [ship_to_dict(ship) for ship in Computerfleet],
+            'grid_size': grid_size,
+            'scroll': scroll,
+            'number_of_sunk_ship_ai': number_of_sunk_ship_ai,
+            'number_of_sunk_ship_player': number_of_sunk_ship_player,
+            'ai_values': ai_values,
+            'ai_vs_player': ai_vs_player
+        }
+        
+        try:
+            with open(save_path, 'w') as file:
+                json.dump(game_state, file)
+            print(f"Game state saved for player {Player_name}")
+        except Exception as e:
+            print(f"Error saving game state: {e}")
+
+    def load_game_state():
+        global Playerfleet, Computerfleet, player1_values, player2_values, game_started
+        global game_over, grid_size, scroll, number_of_sunk_ship_ai
+        global number_of_sunk_ship_player, ai_values, ai_turn, ai_vs_player
+        
+        # Get save file path for current player
+        save_filename = f"save_{Player_name.lower()}.json"
+        save_path = os.path.join(SAVE_DIRS['save_file'], save_filename)
+        
+        try:
+            with open(save_path, 'r') as file:
+                game_state = json.load(file)
+            
+            # Verify save belongs to current player
+            if game_state.get('player_name') != Player_name:
+                print("Save file belongs to different player - starting new game")
+                raise FileNotFoundError
+                
+            # Restore game state
+            game_started = game_state['game_started']
+            game_over = game_state['game_over']
+            player1_values = game_state['player1_values']
+            player2_values = game_state['player2_values']
+            grid_size = game_state['grid_size']
+            scroll = game_state.get('scroll', 0)
+            number_of_sunk_ship_ai = game_state.get('number_of_sunk_ship_ai', 0)
+            number_of_sunk_ship_player = game_state.get('number_of_sunk_ship_player', 0)
+            ai_values = game_state.get('ai_values', {})
+            ai_vs_player = game_state.get('ai_vs_player', True)
+            
+            # Recreate fleets
+            Playerfleet = [dict_to_ship(ship_data) for ship_data in game_state['Playerfleet']]
+            Computerfleet = [dict_to_ship(ship_data) for ship_data in game_state['Computerfleet']]
+            
+            # Reconstruct AI turn object
+            ai_turn = ai_thinking(grid_size, ai_values, player1_values)
+            
+            print(f"Loaded game state for player {Player_name}")
+        except FileNotFoundError:
+            print(f"Starting new game for player {Player_name}")
+            pass
+        except Exception as e:
+            print(f"Error loading game state: {e}")
+
     # - - - - - - - - Initialise players - - - - - - - - -
     # create player fleet
     Playerfleet = createfleet()
@@ -1389,10 +1501,13 @@ def game():
     # Initialize running game
     run_game = True
 
+    load_game_state()
+
 
     # Events handler
     def handle_events() -> None:
-        global run_game, yCooForShots, xCooForShots, game_over, player1_values, player2_values, game_paused
+        global i,run_game, yCooForShots, xCooForShots, game_over, player1_values, player2_values, game_paused
+
         
         
         # for loop to handle events in the game
@@ -1400,6 +1515,9 @@ def game():
 
             # check if the event is a quit event
             if event.type == pygame.QUIT:
+                if not game_over:
+                    save_game_state()
+
                 # set run_game to False for exiting the game loop
                 run_game = False
                 sys.exit()
@@ -1469,6 +1587,7 @@ def game():
                                             player1_values, player2_values, game_over = shot[1], shot[2], shot[3]
                                         except:
                                             pass
+    
     while run_game:
         clock.tick(60)
         handle_events()
@@ -1476,11 +1595,8 @@ def game():
 
     pygame.quit()
 
-
-
-
 def get_player_name(screen=SCREEN, font=get_font(24)):
-    global name
+    global Player_name
     SCREEN_RECT = screen.get_rect()
     input_box = pygame.Rect(SCREEN_RECT.centerx, SCREEN_RECT.centery, 400, 50)
     input_box.center = SCREEN_RECT.center
@@ -1531,11 +1647,12 @@ def get_player_name(screen=SCREEN, font=get_font(24)):
             WINS, LOSSES = get_player_stats(text.upper())  # Get player stats
             if WINS is None and LOSSES is None:
                 add_player(text.upper())
-            name = text.upper()
+            Player_name = text.upper()
             done = True
             main_menu()
 
         pygame.display.update()
+
 
 # Call the function to get the player name
 get_player_name()

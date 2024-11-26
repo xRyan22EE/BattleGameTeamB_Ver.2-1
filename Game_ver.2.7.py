@@ -17,6 +17,7 @@ import math
 import os
 import time
 import sys
+import json
 
 # - - - - - - - - - - - - - - - - - - Initialization - - - - - - - - - - - - - - - - - -
 # Update directory handling
@@ -271,6 +272,7 @@ class ship:
 
         # Set the start position of the ship to the position passed in the constructor. This is the position the ship will return to if it is not placed in the grid.
         self.start_pos = pos
+        self.size = size
 
         # Load the Vertical Image.
         self.vimg = LoadImage(img, size)
@@ -538,7 +540,6 @@ class ship:
     def view_all_instances(cls):
         for ships in cls.instances:
             print(ships)
-
 
 # - - - - - - - - Ships Related Functions - - - - - - - -
 # Create fleet based on players fleet dictionary
@@ -917,6 +918,141 @@ def restart_game(): # Restart the game
     number_of_sunk_ship_player = 0
 
 
+Player_name = "Player1"  # Default player name change the name bt the name enterted by the player in the gui 
+
+
+def ship_to_dict(ship):
+    # Get image path from Players_fleet dictionary based on ship name
+    ship_info = Players_fleet.get(ship.name)
+    image_path = ship_info[1] if ship_info else None  # Index 1 contains the image path
+    
+    return {
+        'name': ship.name,
+        'start_pos': ship.start_pos,
+        'size': ship.size,
+        'rect': {
+            'x': ship.rect.x,
+            'y': ship.rect.y,
+            'width': ship.rect.width,
+            'height': ship.rect.height
+        },
+        'rotation': ship.rotation,
+        'active': ship.active,
+        'image_path': image_path
+    }
+
+def dict_to_ship(ship_dict):
+    # Create new ship instance using stored values
+    new_ship = ship(
+        name=ship_dict['name'],
+        img=ship_dict['image_path'],
+        pos=ship_dict['start_pos'],
+        size=ship_dict['size']
+    )
+    
+    # Restore ship state
+    new_ship.rotation = ship_dict['rotation'] # Restore rotation state
+    new_ship.active = ship_dict['active'] # Restore active state
+    
+    # Restore rect
+    rect_data = ship_dict['rect']
+    new_ship.rect.x = rect_data['x']
+    new_ship.rect.y = rect_data['y']
+    new_ship.rect.width = rect_data['width']
+    new_ship.rect.height = rect_data['height']
+    
+    # Update image based on rotation
+    if new_ship.rotation:
+        new_ship.image = new_ship.himg
+    else:
+        new_ship.image = new_ship.vimg
+        
+    return new_ship
+
+
+# Add this to your DIRS setup at the beginning of the file
+SAVE_DIRS = {
+    # ... your existing DIRS entries ...
+    'save_file': os.path.join(os.path.dirname(__file__), 'Save_file')
+}
+
+# Create Save_file directory if it doesn't exist
+os.makedirs(SAVE_DIRS['save_file'], exist_ok=True)
+
+def save_game_state():
+    # Create save filename using player name
+    save_filename = f"save_{Player_name.lower()}.json"
+    save_path = os.path.join(SAVE_DIRS['save_file'], save_filename)
+    
+    game_state = {
+        'player_name': Player_name,
+        'game_started': game_started,
+        'game_over': game_over,
+        'resetGameGrid': resetGameGrid,
+        'player1_values': player1_values,
+        'player2_values': player2_values,
+        'Playerfleet': [ship_to_dict(ship) for ship in Playerfleet],
+        'Computerfleet': [ship_to_dict(ship) for ship in Computerfleet],
+        'grid_size': grid_size,
+        'scroll': scroll,
+        'number_of_sunk_ship_ai': number_of_sunk_ship_ai,
+        'number_of_sunk_ship_player': number_of_sunk_ship_player,
+        'ai_values': ai_values,
+        'ai_vs_player': ai_vs_player
+    }
+    
+    try:
+        with open(save_path, 'w') as file:
+            json.dump(game_state, file)
+        print(f"Game state saved for player {Player_name}")
+    except Exception as e:
+        print(f"Error saving game state: {e}")
+
+def load_game_state():
+    global Playerfleet, Computerfleet, player1_values, player2_values, game_started
+    global game_over, grid_size, scroll, number_of_sunk_ship_ai
+    global number_of_sunk_ship_player, ai_values, ai_turn, ai_vs_player
+    
+    # Get save file path for current player
+    save_filename = f"save_{Player_name.lower()}.json"
+    save_path = os.path.join(SAVE_DIRS['save_file'], save_filename)
+    
+    try:
+        with open(save_path, 'r') as file:
+            game_state = json.load(file)
+        
+        # Verify save belongs to current player
+        if game_state.get('player_name') != Player_name:
+            print("Save file belongs to different player - starting new game")
+            raise FileNotFoundError
+            
+        # Restore game state
+        game_started = game_state['game_started']
+        game_over = game_state['game_over']
+        player1_values = game_state['player1_values']
+        player2_values = game_state['player2_values']
+        grid_size = game_state['grid_size']
+        scroll = game_state.get('scroll', 0)
+        number_of_sunk_ship_ai = game_state.get('number_of_sunk_ship_ai', 0)
+        number_of_sunk_ship_player = game_state.get('number_of_sunk_ship_player', 0)
+        ai_values = game_state.get('ai_values', {})
+        ai_vs_player = game_state.get('ai_vs_player', True)
+        
+        # Recreate fleets
+        Playerfleet = [dict_to_ship(ship_data) for ship_data in game_state['Playerfleet']]
+        Computerfleet = [dict_to_ship(ship_data) for ship_data in game_state['Computerfleet']]
+        
+        # Reconstruct AI turn object
+        ai_turn = ai_thinking(grid_size, ai_values, player1_values)
+        
+        print(f"Loaded game state for player {Player_name}")
+    except FileNotFoundError:
+        print(f"Starting new game for player {Player_name}")
+        pass
+    except Exception as e:
+        print(f"Error loading game state: {e}")
+
+
 # setting button function
 def setting_button_function() -> bool:
     global game_paused, run_game
@@ -999,6 +1135,8 @@ def setting_button_function() -> bool:
         toggle_fullscreen()
     
     if quit_button.Draw(GameScreen):
+        if not game_over:
+            save_game_state()
         run_game = False
 
     if instructions_button.Draw(GameScreen):
@@ -1006,6 +1144,8 @@ def setting_button_function() -> bool:
         game_paused = True  # Keep the settings panel open
 
     if main_menu_button.Draw(GameScreen):
+        if not game_over:
+            save_game_state()
         run_game = False
         #main_menu()
         pass
@@ -1179,6 +1319,7 @@ randomized_computer_ships(Computerfleet, cGameGrid)
 # Initialize running game
 run_game = True
 
+load_game_state()
 
 # Events handler
 def handle_events() -> None:
@@ -1190,6 +1331,8 @@ def handle_events() -> None:
 
         # check if the event is a quit event
         if event.type == pygame.QUIT:
+            if not game_over:
+                save_game_state()  # Save game state before exiting
             # set run_game to False for exiting the game loop
             run_game = False
 
